@@ -13,6 +13,7 @@ socket, opt-in tracing, and a repeatable benchmark/test harness. Existing tools 
 - How it works now: [docs/performance-architecture.md](docs/performance-architecture.md)
 - Measured results and their limits: [docs/performance-benchmarks.md](docs/performance-benchmarks.md)
 - Tool/protocol compatibility: [docs/compatibility.md](docs/compatibility.md)
+- Security model and known limitations: [docs/security.md](docs/security.md)
 - Progress checkpoint: [docs/STATUS.md](docs/STATUS.md)
 
 Attribution: see [NOTICE](NOTICE). Licence: [Apache-2.0](LICENSE).

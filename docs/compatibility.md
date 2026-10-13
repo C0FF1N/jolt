@@ -51,11 +51,13 @@ original message types.
 | Name / id | "Browser MCP - Automate your browser…", `bjfgambnhccakkhmkepdoekmckoijdlc` | "Browser MCP Turbo (unofficial)", id assigned by Chrome when loaded unpacked |
 | Permissions | `debugger, scripting, storage, tabs, webNavigation` + `<all_urls>` host access + content script | `debugger, tabs, storage`; no host permissions, no content scripts, no `externally_connectable` |
 | Snapshot | its own accessibility YAML | `role "name" [flags] [ref=eN]` rows built from `Accessibility.getFullAXTree`; similar shape, **not guaranteed identical** text |
-| Keys for `browser_press_key` | unknown | single characters plus Enter, Tab, Escape, Backspace, Delete, Space, Arrow keys, Home/End, PageUp/PageDown; others error with the supported list |
-| URL scheme for navigate | unknown | `http(s):`, `file:`, `about:`, `chrome:` only (blocks `javascript:` and `data:`) |
+| Keys for `browser_press_key` | unknown (closed source) | single characters; Enter, Tab, Escape, Backspace, Delete, Insert, Space, Arrow keys, Home/End, PageUp/PageDown, F1–F12 (names are case-insensitive); modifier chords such as `Control+a`, `Shift+Tab`, `Control+Shift+a` (Control/Ctrl, Alt, Shift, Meta/Cmd/Command). Anything else errors with the supported list. Compatibility with the original's exact key vocabulary was **not** verified. |
+| URL scheme for navigate | unknown | `http(s)://` and `about:blank` only (blocks `javascript:`, `data:`, `file:`, `chrome:`) — stricter than upstream may be; see security.md |
+| `browser_type` with empty text | unknown | clears the field |
+| Same-document navigation (`go_back` in an SPA, hash changes) | unknown | returns on `Page.navigatedWithinDocument` instead of waiting for a `load` event |
 | `browser_drag` | handled (unregistered on the server) | not implemented |
 | Connect UX | click icon → Connect | click icon → "Connect this tab" (one tab, shown by the debugger banner) |
-| Port | 9009 | 9009 by default (configurable through the extension message API; see local-development.md) |
+| Port | 9009 | 9009 by default; editable in the popup ("Server port", 1024–65535, remembered) for use with `BROWSERMCP_PORT` |
 
 ## Migration notes
 
@@ -70,7 +72,8 @@ original message types.
 
 - Original Web Store extension: concurrent reads and `snapshot: "none"` flows are server-side only and were not
   exercised against it here.
-- Password fields: values are included in `[value="…"]` for text boxes if Chrome's accessibility tree exposes them;
-  Chrome normally masks password inputs, but this was **not verified** here.
+- Password fields: the new extension drops the `[value="…"]` of any text box whose DOM `type` is `password` (and
+  fails closed if the type cannot be determined). Covered by unit tests with a fake CDP; not exercised against a real
+  password field.
 - `browser_wait_for` matches on `document.body.innerText`; it does not see text inside closed shadow roots or
   cross-origin iframes.

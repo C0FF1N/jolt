@@ -30,6 +30,8 @@ function fakeCdp(opts: { alive?: Set<number>; loadEvent?: "fires" | "never" } = 
           return { frameId: "f" } as any;
         case "Page.getNavigationHistory":
           return { currentIndex: 1, entries: [{ id: 5 }, { id: 6 }] } as any;
+        case "DOM.describeNode":
+          return { node: { attributes: params!.backendNodeId === 11 ? ["type", "password"] : ["type", "text"] } } as any;
         case "Runtime.callFunctionOn":
           return { result: { value: { ok: true } } } as any;
         default:
@@ -96,9 +98,12 @@ describe("extension handlers", () => {
     expect(calls.filter((c) => c.method === "Input.dispatchKeyEvent").length).toBe(2);
   });
 
-  it("navigate rejects non-http URLs such as javascript:", async () => {
+  it("navigate only allows http(s) and about:blank", async () => {
     const { h } = make();
-    await expect(h.browser_navigate({ url: "javascript:alert(1)" })).rejects.toThrow(/absolute URL/);
+    for (const bad of ["javascript:alert(1)", "data:text/html,x", "file:///C:/secret.txt", "chrome://settings", "about:srcdoc", " https://x"]) {
+      await expect(h.browser_navigate({ url: bad })).rejects.toThrow(/http\(s\) URL/);
+    }
+    await expect(h.browser_navigate({ url: "about:blank" })).resolves.toBeUndefined();
     await expect(h.browser_navigate({ url: "https://example.com" })).resolves.toBeUndefined();
   });
 
@@ -124,5 +129,83 @@ describe("extension handlers", () => {
   it("returns collected console entries", async () => {
     const { h } = make();
     expect(await h.browser_get_console_logs({})).toEqual([{ type: "log", text: "hi", timestamp: 1 }]);
+  });
+
+  it("never exposes the value of a password input in a snapshot", async () => {
+    const f = fakeCdp();
+    const origSend = f.cdp.send.bind(f.cdp);
+    f.cdp.send = (async (m: string, p?: Record<string, unknown>) => {
+      const r: any = await origSend(m, p);
+      if (m === "Accessibility.getFullAXTree") {
+        r.nodes[1].value = { type: "x", value: "hunter2" }; // node with backend id 11 (a password)
+        r.nodes[2].role = { type: "x", value: "textbox" };
+        r.nodes[2].value = { type: "x", value: "visible" }; // backend id 12 (type=text)
+      }
+      return r;
+    }) as typeof f.cdp.send;
+    const h = createHandlers({ cdp: f.cdp, consoleLog: () => [] });
+    const yaml = (await h.browser_snapshot({})) as string;
+    expect(yaml).not.toContain("hunter2");
+    expect(yaml).toContain('[value="visible"]');
+  });
+
+  it("fails closed when the element type cannot be determined", async () => {
+    const f = fakeCdp();
+    const origSend = f.cdp.send.bind(f.cdp);
+    f.cdp.send = (async (m: string, p?: Record<string, unknown>) => {
+      if (m === "DOM.describeNode") throw new Error("gone");
+      const r: any = await origSend(m, p);
+      if (m === "Accessibility.getFullAXTree") r.nodes[1].value = { type: "x", value: "secret" };
+      return r;
+    }) as typeof f.cdp.send;
+    const h = createHandlers({ cdp: f.cdp, consoleLog: () => [] });
+    expect((await h.browser_snapshot({})) as string).not.toContain("secret");
+  });
+
+  it("press_key sends a modifier chord: modifiers down, key, then released in reverse", async () => {
+    const { h, calls } = make();
+    await h.browser_press_key({ key: "Control+Shift+a" });
+    const keys = calls.filter((c) => c.method === "Input.dispatchKeyEvent").map((c) => [c.params!.type, c.params!.key, c.params!.modifiers]);
+    expect(keys).toEqual([
+      ["rawKeyDown", "Control", 2],
+      ["rawKeyDown", "Shift", 10],
+      ["rawKeyDown", "a", 10],
+      ["keyUp", "a", 10],
+      ["keyUp", "Shift", 10],
+      ["keyUp", "Control", 2],
+    ]);
+  });
+
+  it("press_key releases held modifiers even if the key event fails", async () => {
+    const f = fakeCdp();
+    const orig = f.cdp.send.bind(f.cdp);
+    f.cdp.send = (async (m: string, p?: Record<string, unknown>) => {
+      if (m === "Input.dispatchKeyEvent" && p?.key === "a") throw new Error("boom");
+      return orig(m, p);
+    }) as typeof f.cdp.send;
+    const h = createHandlers({ cdp: f.cdp, consoleLog: () => [] });
+    await expect(h.browser_press_key({ key: "Control+a" })).rejects.toThrow("boom");
+    const ups = f.calls.filter((c) => c.method === "Input.dispatchKeyEvent" && c.params!.type === "keyUp" && c.params!.key === "Control");
+    expect(ups).toHaveLength(1);
+  });
+
+  it("typing empty text clears the field with Delete instead of a no-op insert", async () => {
+    const { h, calls } = make();
+    await h.browser_snapshot({});
+    await h.browser_type({ ref: "e1", text: "", submit: false });
+    expect(calls.some((c) => c.method === "Input.insertText")).toBe(false);
+    expect(calls.find((c) => c.method === "Input.dispatchKeyEvent")!.params).toMatchObject({ key: "Delete" });
+  });
+
+  it("navigation waits on both the load and same-document events", async () => {
+    const seen: unknown[] = [];
+    const f = fakeCdp();
+    f.cdp.once = (async (m: string | string[]) => {
+      seen.push(m);
+      return {};
+    }) as typeof f.cdp.once;
+    const h = createHandlers({ cdp: f.cdp, consoleLog: () => [] });
+    await h.browser_navigate({ url: "https://example.com/#x" });
+    expect(seen[0]).toEqual(["Page.loadEventFired", "Page.navigatedWithinDocument"]);
   });
 });

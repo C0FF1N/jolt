@@ -279,4 +279,48 @@ describe.skipIf(!built)("server <-> extension protocol (fake page)", () => {
       }),
     ).rejects.toThrow();
   });
+
+  it("survives a replaced socket sending garbage (no unhandled error crash)", async () => {
+    const first = connectExtension(port);
+    await first.opened;
+    const second = connectExtension(port);
+    await second.opened;
+    // The server terminates the replaced socket; sending on it must not take the server down.
+    try { first.ws.send("x".repeat(1000)); } catch { /* socket may already be closed */ }
+    await new Promise((r) => setTimeout(r, 300));
+    const r = await call("browser_snapshot");
+    expect(r.isError).toBeFalsy();
+    second.ws.close();
+  });
+
+  it("closes the replaced socket", async () => {
+    const first = connectExtension(port);
+    await first.opened;
+    const closed = new Promise<void>((resolve) => first.ws.once("close", () => resolve()));
+    const second = connectExtension(port);
+    await second.opened;
+    await Promise.race([closed, new Promise((_, rej) => setTimeout(() => rej(new Error("old socket still open")), 3000))]);
+    second.ws.close();
+  });
+
+  it("tolerates keepalive ping frames from the extension", async () => {
+    const ext = connectExtension(port);
+    await ext.opened;
+    ext.ws.send(JSON.stringify({ type: "ping" }));
+    const r = await call("browser_snapshot");
+    expect(r.isError).toBeFalsy();
+    ext.ws.close();
+  });
+});
+
+describe.skipIf(!built)("shutdown", () => {
+  it("exits promptly when the MCP client closes while an extension is connected", async () => {
+    await startServer();
+    const ext = connectExtension(port);
+    await ext.opened;
+    const started = Date.now();
+    await client.close();
+    expect(Date.now() - started).toBeLessThan(5000);
+    ext.ws.close();
+  });
 });

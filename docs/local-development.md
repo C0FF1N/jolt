@@ -58,10 +58,8 @@ overwrite it. If the original Browser MCP server is also running it owns port 90
 
 ### Choosing a port for the new extension
 
-The popup always connects to 9009. To use another port, send the extension's service worker a message from the
-extension's own DevTools console (`chrome://extensions` → *Inspect views: service worker*):
-`chrome.runtime.sendMessage({type:"connect", tabId: <id>, port: 9010})`. The port must be 1024–65535 and the host
-is always `127.0.0.1`.
+The popup has a **Server port** field (default 9009, remembered). Set it to the same value as the server's
+`BROWSERMCP_PORT` before pressing *Connect this tab*. The port must be 1024–65535 and the host is always `127.0.0.1`.
 
 ## Diagnostics
 

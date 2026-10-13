@@ -137,6 +137,10 @@ export class ExtensionLink {
     this.ws.off("message", this.onMessage);
     this.ws.off("close", this.onClose);
     this.ws.off("error", this.onError);
+    // A detached socket can still emit 'error' (e.g. oversized frame); without a
+    // listener Node would throw and kill the whole server. Swallow and drop it.
+    this.ws.on("error", () => undefined);
+    this.ws.terminate();
     for (const id of [...this.pending.keys()]) {
       this.settle(id, (p) => p.reject(reason));
     }
@@ -167,6 +171,7 @@ export class ExtensionLink {
       trace("ws.drop_invalid_json");
       return;
     }
+    if ((json as { type?: unknown } | null)?.type === "ping") return; // extension keepalive
     const hello = HelloFrame.safeParse(json);
     if (hello.success) {
       this.protocolVersion = hello.data.payload.protocolVersion;

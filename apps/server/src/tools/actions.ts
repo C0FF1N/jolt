@@ -88,6 +88,14 @@ export async function perform(
       await context.sendSocketMessage("browser_press_key", { key: a.key }, { timeoutMs: cap(30_000) });
       return `Pressed key ${a.key}`;
     case "wait":
+      if (!(a.time >= 0 && a.time <= 300)) {
+        throw new BrowserMcpError(
+          "INVALID_ARGUMENT",
+          "wait time must be between 0 and 300 seconds.",
+          "wait",
+          "Use browser_wait_for to wait for a condition instead of a long sleep.",
+        );
+      }
       // Upstream used the fixed 30s transport timeout, so waits > 30s always failed.
       await context.sendSocketMessage(
         "browser_wait",

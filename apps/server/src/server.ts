@@ -48,7 +48,11 @@ export async function createServerWithTools(options: Options): Promise<Server> {
   );
 
   const wss = await createWebSocketServer();
+  wss.on("error", (error) => {
+    console.error(`WebSocket server error: ${error.message}`);
+  });
   wss.on("connection", (websocket) => {
+    websocket.on("error", () => undefined); // per-socket errors are handled by ExtensionLink
     // A new connection replaces (and rejects pending work on) the old one.
     context.attach(websocket);
   });
@@ -107,8 +111,11 @@ export async function createServerWithTools(options: Options): Promise<Server> {
   const closeProtocol = server.close.bind(server);
   server.close = async () => {
     await closeProtocol();
-    await new Promise<void>((resolve) => wss.close(() => resolve()));
+    // Close the extension link first (it terminates the socket); wss.close() waits for
+    // every client socket to end, so doing it first stalls shutdown while a tab is connected.
     await context.close();
+    for (const client of wss.clients) client.terminate();
+    await new Promise<void>((resolve) => wss.close(() => resolve()));
   };
 
   return server;

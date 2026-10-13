@@ -131,7 +131,10 @@ describe("ExtensionLink", () => {
     link.close(new BrowserMcpError("REPLACED", "replaced"));
     expect(serverSide.listenerCount("message")).toBe(baseline.message);
     expect(serverSide.listenerCount("close")).toBe(baseline.close);
-    expect(serverSide.listenerCount("error")).toBe(baseline.error);
+    // One no-op error listener stays on purpose: a detached socket may still emit 'error'
+    // (e.g. oversized frame) and an unhandled one would crash the process. The socket is terminated.
+    expect(serverSide.listenerCount("error")).toBe(baseline.error + 1);
+    expect(serverSide.readyState).toBeGreaterThanOrEqual(serverSide.CLOSING);
   });
 
   it("ignores malformed frames and unknown request ids", async () => {

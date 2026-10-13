@@ -14,11 +14,11 @@
       "tool_calls_per_iter": 1,
       "latency_ms": {
         "n": 40,
-        "min": 0.5497000000000298,
-        "median": 0.7264000000000124,
-        "p95": 0.9246000000002823,
-        "max": 1.0313999999998487,
-        "mean": 0.7422950000000356
+        "min": 0.3362000000001899,
+        "median": 0.44810000000006767,
+        "p95": 0.6179000000001906,
+        "max": 1.2390999999997803,
+        "mean": 0.4837525000000369
       },
       "response_bytes": {
         "n": 40,
@@ -32,7 +32,7 @@
       "ws_by_type": {
         "browser_get_console_logs": 40
       },
-      "iterations_per_sec": 1343.7473754934106,
+      "iterations_per_sec": 2063.2701800719515,
       "failure_rate": 0,
       "server_rss_mb": 73
     },
@@ -40,11 +40,11 @@
       "tool_calls_per_iter": 1,
       "latency_ms": {
         "n": 40,
-        "min": 0.5994000000000597,
-        "median": 0.7629000000001724,
-        "p95": 0.9542000000001281,
-        "max": 1.182299999999941,
-        "mean": 0.7841100000000096
+        "min": 0.3659000000002379,
+        "median": 0.43479999999999563,
+        "p95": 0.6684000000000196,
+        "max": 0.763300000000072,
+        "mean": 0.48183250000004135
       },
       "response_bytes": {
         "n": 40,
@@ -58,19 +58,19 @@
       "ws_by_type": {
         "browser_snapshot_bundle": 40
       },
-      "iterations_per_sec": 1272.4710433308305,
+      "iterations_per_sec": 2071.96987355804,
       "failure_rate": 0,
-      "server_rss_mb": 74
+      "server_rss_mb": 73
     },
     "snapshot_large": {
       "tool_calls_per_iter": 1,
       "latency_ms": {
         "n": 40,
-        "min": 3.757499999999709,
-        "median": 4.623899999999594,
-        "p95": 6.508300000000418,
-        "max": 7.844099999999344,
-        "mean": 4.863022500000056
+        "min": 2.43920000000071,
+        "median": 2.936200000000099,
+        "p95": 4.828599999999824,
+        "max": 5.3312000000005355,
+        "mean": 3.191249999999991
       },
       "response_bytes": {
         "n": 40,
@@ -84,19 +84,19 @@
       "ws_by_type": {
         "browser_snapshot_bundle": 40
       },
-      "iterations_per_sec": 205.54952895756065,
+      "iterations_per_sec": 313.27830077849706,
       "failure_rate": 0,
-      "server_rss_mb": 98
+      "server_rss_mb": 99
     },
     "element_lookup_hover": {
       "tool_calls_per_iter": 1,
       "latency_ms": {
         "n": 40,
-        "min": 0.707300000000032,
-        "median": 0.8876000000000204,
-        "p95": 1.355600000000777,
-        "max": 2.338600000000042,
-        "mean": 0.9577975000000152
+        "min": 0.529700000000048,
+        "median": 0.6419000000005326,
+        "p95": 0.8179999999993015,
+        "max": 0.8648999999995794,
+        "mean": 0.6607949999999392
       },
       "response_bytes": {
         "n": 40,
@@ -111,7 +111,7 @@
         "browser_hover": 40,
         "browser_snapshot_bundle": 40
       },
-      "iterations_per_sec": 1042.5164261494397,
+      "iterations_per_sec": 1511.9043569303442,
       "failure_rate": 0,
       "server_rss_mb": 73
     },
@@ -119,11 +119,11 @@
       "tool_calls_per_iter": 1,
       "latency_ms": {
         "n": 40,
-        "min": 0.5702999999994063,
-        "median": 0.902299999999741,
-        "p95": 1.1252999999996973,
-        "max": 1.1697000000003754,
-        "mean": 0.8837575000000243
+        "min": 0.5267999999996391,
+        "median": 0.6538000000000466,
+        "p95": 0.8148000000001048,
+        "max": 0.9723000000003594,
+        "mean": 0.6702974999999924
       },
       "response_bytes": {
         "n": 40,
@@ -138,19 +138,19 @@
         "browser_click": 40,
         "browser_snapshot_bundle": 40
       },
-      "iterations_per_sec": 1129.7137305406923,
+      "iterations_per_sec": 1490.4018123285734,
       "failure_rate": 0,
-      "server_rss_mb": 73
+      "server_rss_mb": 74
     },
     "type": {
       "tool_calls_per_iter": 1,
       "latency_ms": {
         "n": 40,
-        "min": 0.6810999999997875,
-        "median": 0.8158999999996013,
-        "p95": 1.141500000000633,
-        "max": 1.256999999999607,
-        "mean": 0.8763649999999871
+        "min": 0.4709999999995489,
+        "median": 0.5902999999998428,
+        "p95": 0.8052999999999884,
+        "max": 0.8646999999991749,
+        "mean": 0.6118449999999711
       },
       "response_bytes": {
         "n": 40,
@@ -165,7 +165,7 @@
         "browser_type": 40,
         "browser_snapshot_bundle": 40
       },
-      "iterations_per_sec": 1139.3998780842076,
+      "iterations_per_sec": 1633.0129906183408,
       "failure_rate": 0,
       "server_rss_mb": 73
     },
@@ -173,11 +173,11 @@
       "tool_calls_per_iter": 1,
       "latency_ms": {
         "n": 40,
-        "min": 0.5866000000005442,
-        "median": 0.8341000000000349,
-        "p95": 1.4815999999991618,
-        "max": 1.5504000000000815,
-        "mean": 0.922287499999993
+        "min": 0.46189999999933207,
+        "median": 0.5414999999993597,
+        "p95": 0.7937999999994645,
+        "max": 0.8544000000001688,
+        "mean": 0.5779350000000022
       },
       "response_bytes": {
         "n": 40,
@@ -192,7 +192,7 @@
         "browser_navigate": 40,
         "browser_snapshot_bundle": 40
       },
-      "iterations_per_sec": 1082.9865520144845,
+      "iterations_per_sec": 1728.7653589997574,
       "failure_rate": 0,
       "server_rss_mb": 74
     },
@@ -200,11 +200,11 @@
       "tool_calls_per_iter": 1,
       "latency_ms": {
         "n": 40,
-        "min": 0.4532999999992171,
-        "median": 0.6244999999998981,
-        "p95": 0.8553999999985535,
-        "max": 0.8723000000009051,
-        "mean": 0.642792499999905
+        "min": 0.3456000000005588,
+        "median": 0.47769999999945867,
+        "p95": 0.6723000000001775,
+        "max": 0.804599999999482,
+        "mean": 0.4888774999998077
       },
       "response_bytes": {
         "n": 40,
@@ -218,19 +218,19 @@
       "ws_by_type": {
         "browser_click": 40
       },
-      "iterations_per_sec": 1553.32567025999,
+      "iterations_per_sec": 2043.339224961567,
       "failure_rate": 0,
-      "server_rss_mb": 72
+      "server_rss_mb": 73
     },
     "batch_10": {
       "tool_calls_per_iter": 1,
       "latency_ms": {
         "n": 40,
-        "min": 1.9336000000002969,
-        "median": 2.3720999999986816,
-        "p95": 3.228900000000067,
-        "max": 3.721299999999246,
-        "mean": 2.4585400000000392
+        "min": 1.1692000000002736,
+        "median": 1.6324000000004162,
+        "p95": 2.2384000000001834,
+        "max": 2.8220000000001164,
+        "mean": 1.6756124999999884
       },
       "response_bytes": {
         "n": 40,
@@ -250,19 +250,19 @@
         "getUrl": 40,
         "getTitle": 40
       },
-      "iterations_per_sec": 406.5416618813312,
+      "iterations_per_sec": 596.556378306231,
       "failure_rate": 0,
-      "server_rss_mb": 78
+      "server_rss_mb": 79
     },
     "sequence_10": {
       "tool_calls_per_iter": 10,
       "latency_ms": {
         "n": 40,
-        "min": 4.360000000000582,
-        "median": 6.625700000000506,
-        "p95": 8.700299999998606,
-        "max": 10.735099999999875,
-        "mean": 6.78737000000001
+        "min": 3.5393000000003667,
+        "median": 4.532100000000355,
+        "p95": 5.989700000000084,
+        "max": 6.5695999999989,
+        "mean": 4.678745000000208
       },
       "response_bytes": {
         "n": 40,
@@ -281,31 +281,31 @@
         "browser_hover": 40,
         "browser_press_key": 40
       },
-      "iterations_per_sec": 147.29227094855105,
+      "iterations_per_sec": 213.6876559586006,
       "failure_rate": 0,
-      "server_rss_mb": 93
+      "server_rss_mb": 92
     },
     "repeated_100_clicks": {
       "latency_ms": {
         "n": 100,
-        "min": 0.4878000000007887,
-        "median": 0.7793000000001484,
-        "p95": 1.1484999999993306,
-        "max": 4.8233000000000175,
-        "mean": 0.8449369999998817
+        "min": 0.4003000000011525,
+        "median": 0.5488000000004831,
+        "p95": 0.918999999999869,
+        "max": 4.056300000000192,
+        "mean": 0.6253200000000834
       },
-      "first_10_median": 1.0544000000008964,
-      "last_10_median": 0.6679000000003725
+      "first_10_median": 0.7405000000017026,
+      "last_10_median": 0.4452000000001135
     }
   },
   "cold": {
     "first_snapshot_ms": {
       "n": 5,
-      "min": 3.9479999999998654,
-      "median": 4.5452000000000226,
-      "p95": 5.468900000000019,
-      "max": 5.468900000000019,
-      "mean": 4.68863999999993
+      "min": 3.837199999999939,
+      "median": 4.0224000000000615,
+      "p95": 5.1965999999999894,
+      "max": 5.1965999999999894,
+      "mean": 4.420820000000026
     }
   },
   "env": {
@@ -314,7 +314,7 @@
     "cpu": "AMD Ryzen 7 7840HS w/ Radeon 780M Graphics     ",
     "cores": 16,
     "totalMemGb": 15,
-    "date": "2026-10-13T11:24:33.997Z",
+    "date": "2026-10-13T11:56:29.447Z",
     "notes": "Mock extension: extension-side time is SIMULATED (rttMs per message). Measures server+protocol overhead only, not Chrome."
   }
 }

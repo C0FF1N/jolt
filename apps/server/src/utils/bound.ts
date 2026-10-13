@@ -18,12 +18,9 @@ export function boundText(
   { maxChars, offset = 0 }: { maxChars: number; offset?: number },
 ): Bounded {
   const total = text.length;
-  let start = Math.max(0, Math.min(offset, total));
-  if (start > 0) {
-    // align to the start of the line containing `start`
-    const nl = text.lastIndexOf("\n", start - 1);
-    start = nl === -1 ? 0 : nl + 1;
-  }
+  // Offsets we hand out are either line starts or the result of a hard cut of an
+  // oversized line; honour them exactly (re-aligning would repeat the same page forever).
+  const start = Math.max(0, Math.min(offset, total));
   if (maxChars <= 0 || total - start <= maxChars) {
     return { text: text.slice(start), truncated: false, nextOffset: total, totalChars: total, start, end: total };
   }

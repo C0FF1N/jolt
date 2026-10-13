@@ -5,55 +5,55 @@
 
 ## 1. Real browser A/B (headless Chromium, same extension for both servers)
 
-Source: `real-chrome-1791891521987.json`. Chromium Chrome/153.0.8010.12, Node v24.14.0, Windows_NT 10.0.26200, AMD Ryzen 7 7840HS w/ Radeon 780M Graphics      (16 cores, 15 GB). Run: 2026-10-13T11:38:41.977Z.
+Source: `real-chrome-1791892671420.json`. Chromium Chrome/153.0.8010.12, Node v24.14.0, Windows_NT 10.0.26200, AMD Ryzen 7 7840HS w/ Radeon 780M Graphics      (16 cores, 15 GB). Run: 2026-10-13T11:57:51.420Z.
 30 measured iterations per scenario after 5 warm-up iterations. **baseline** = unmodified upstream server, **turbo** = this repo's server.
 Both talk to the *same* new extension (`apps/extension`) on the same fixture pages, so differences come from the server only.
 
 | Scenario | baseline median / p95 (ms) | turbo median / p95 (ms) | Δ median | baseline → turbo response bytes (median) | tool calls |
 |---|---|---|---|---|---|
-| status | 0.6 / 0.7 | 0.5 / 0.7 | -8% | 785 → 785 | 1 → 1 |
-| snapshot_small | 2.1 / 2.7 | 1.5 / 1.9 | -31% | 287 → 287 | 1 → 1 |
-| snapshot_large | 743.1 / 775.1 | 744.1 / 769.2 | 0% | 182927 → 182927 | 1 → 1 |
-| click | 6.1 / 11.6 | 6.0 / 6.7 | -1% | 326 → 326 | 1 → 1 |
-| type | 4.0 / 4.7 | 3.6 / 4.5 | -9% | 352 → 352 | 1 → 1 |
-| navigate | 23.5 / 25.4 | 22.8 / 23.8 | -3% | 287 → 287 | 1 → 1 |
-| sequence_10_standard_tools | 60.6 / 66.9 | 60.4 / 62.1 | -0% | 3750 → 3750 | 10 → 10 |
+| status | 0.5 / 0.7 | 0.5 / 0.6 | -1% | 130 → 0 | 1 → 1 |
+| snapshot_small | 2.1 / 2.9 | 1.7 / 2.0 | -19% | 287 → 287 | 1 → 1 |
+| snapshot_large | 725.4 / 761.0 | 712.4 / 736.4 | -2% | 182927 → 182927 | 1 → 1 |
+| click | 6.2 / 11.7 | 6.0 / 6.6 | -4% | 326 → 326 | 1 → 1 |
+| type | 4.3 / 5.4 | 4.3 / 5.4 | 2% | 352 → 352 | 1 → 1 |
+| navigate | 23.2 / 25.7 | 25.4 / 27.6 | 10% | 287 → 287 | 1 → 1 |
+| sequence_10_standard_tools | 62.4 / 79.4 | 60.7 / 67.1 | -3% | 3750 → 3750 | 10 → 10 |
 
 ### New capabilities, compared with the equivalent baseline workflow
 
 | Turbo-only scenario | compared with baseline | turbo median (ms) | baseline median (ms) | Δ median | turbo → baseline bytes | turbo → baseline tool calls |
 |---|---|---|---|---|---|---|
-| click_snapshot_none | click | 6.1 | 6.1 | -0% | 16 vs 326 (-95%) | 1 vs 1 |
-| sequence_10_snapshot_none | sequence_10_standard_tools | 48.9 | 60.6 | -19% | 555 vs 3750 (-85%) | 11 vs 10 |
-| batch_10 | sequence_10_standard_tools | 42.5 | 60.6 | -30% | 1057 vs 3750 (-72%) | 1 vs 10 |
+| click_snapshot_none | click | 6.1 | 6.2 | -3% | 16 vs 326 (-95%) | 1 vs 1 |
+| sequence_10_snapshot_none | sequence_10_standard_tools | 48.8 | 62.4 | -22% | 555 vs 3750 (-85%) | 11 vs 10 |
+| batch_10 | sequence_10_standard_tools | 42.8 | 62.4 | -31% | 1057 vs 3750 (-72%) | 1 vs 10 |
 
 ### Cold start (fresh server process + fresh tab connection, 5 runs)
 
 | Server | connect median / p95 (ms) | first snapshot median / p95 (ms) |
 |---|---|---|
-| baseline | 7.2 / 9.8 | 6.6 / 8.1 |
-| turbo | 7.2 / 13.1 | 5.6 / 10.5 |
+| baseline | 8.2 / 9.8 | 5.8 / 7.2 |
+| turbo | 7.4 / 8.1 | 5.8 / 6.9 |
 
 Failure rate: 0% in every scenario (no failed tool calls, no timeouts).
 
 ## 2. Server/protocol overhead with a mock extension (no browser)
 
-Sources: `baseline-legacy-mock-1791890647589.json`, `turbo-legacy-mock-1791890661376.json`, `turbo-bundle-mock-1791890673998.json`. The mock extension answers instantly (simulated extension time = 0), so these numbers isolate the *server and WebSocket protocol* cost and count **WebSocket round trips per iteration**.
+Sources: `baseline-legacy-mock-1791892566413.json`, `turbo-legacy-mock-1791892577964.json`, `turbo-bundle-mock-1791892589448.json`. The mock extension answers instantly (simulated extension time = 0), so these numbers isolate the *server and WebSocket protocol* cost and count **WebSocket round trips per iteration**.
 *turbo (legacy)* = extension that sends no handshake (like the Web Store build); *turbo (bundle)* = extension advertising `snapshotBundle` (like the new extension).
 
 | Scenario | WS round trips: baseline / turbo legacy / turbo bundle | median ms: baseline / legacy / bundle | response bytes (median) baseline → turbo |
 |---|---|---|---|
-| status | 1 / 1 / 1 | 0.6 / 0.6 / 0.7 | 0 → 0 |
-| snapshot_small | 3 / 3 / 1 | 1.2 / 0.8 / 0.8 | 1776 → 1776 |
-| snapshot_large | 3 / 3 / 1 | 5.4 / 4.7 / 4.6 | 187880 → 187880 |
-| element_lookup_hover | 4 / 4 / 2 | 1.4 / 0.9 / 0.9 | 1797 → 1797 |
-| click | 4 / 4 / 2 | 1.3 / 1.1 / 0.9 | 1792 → 1792 |
-| type | 4 / 4 / 2 | 1.3 / 1.0 / 0.8 | 1803 → 1803 |
-| navigate | 4 / 4 / 2 | 1.4 / 1.0 / 0.8 | 1776 → 1776 |
-| sequence_10 | 36 / 36 / 18 | 10.5 / 7.5 / 6.6 | 16132 → 16132 |
-| repeated_100_clicks | – / – / – | 1.3 / 0.9 / 0.8 | – → – |
-| click_snapshot_none (turbo only) | – / 1 / 1 | – / 0.5 / 0.6 | – → 16 |
-| batch_10 (turbo only) | – / 12 / 12 | – / 2.4 / 2.4 | – → 1052 |
+| status | 1 / 1 / 1 | 0.4 / 0.4 / 0.4 | 0 → 0 |
+| snapshot_small | 3 / 3 / 1 | 0.7 / 0.5 / 0.4 | 1776 → 1776 |
+| snapshot_large | 3 / 3 / 1 | 3.1 / 3.1 / 2.9 | 187880 → 187880 |
+| element_lookup_hover | 4 / 4 / 2 | 0.8 / 0.8 / 0.6 | 1797 → 1797 |
+| click | 4 / 4 / 2 | 0.8 / 0.6 / 0.7 | 1792 → 1792 |
+| type | 4 / 4 / 2 | 0.8 / 0.7 / 0.6 | 1803 → 1803 |
+| navigate | 4 / 4 / 2 | 0.7 / 0.6 / 0.5 | 1776 → 1776 |
+| sequence_10 | 36 / 36 / 18 | 5.9 / 4.8 / 4.5 | 16132 → 16132 |
+| repeated_100_clicks | – / – / – | 0.7 / 0.6 / 0.5 | – → – |
+| click_snapshot_none (turbo only) | – / 1 / 1 | – / 0.4 / 0.5 | – → 16 |
+| batch_10 (turbo only) | – / 12 / 12 | – / 1.6 / 1.6 | – → 1052 |
 
 ## Methodology
 
@@ -66,6 +66,8 @@ Sources: `baseline-legacy-mock-1791890647589.json`, `turbo-legacy-mock-179189066
 ## Limitations (read before quoting any number)
 
 - Single machine, single run set, not isolated from other processes; no confidence intervals. Differences under ~10% are within run-to-run noise.
+- Repeated runs of the same code differed by up to about ±10% for individual standard-tool scenarios (e.g. `navigate` read 23.5, 22.8, 23.2 and 25.4 ms across four runs). Do not read a difference of that size in one scenario as an improvement or a regression.
+- The `status` scenario calls `browser_get_console_logs`; its response bytes depend on whatever console output had accumulated in the tab, not on the server, so compare its latency only.
 - Fixtures are small local pages served from loopback. Real sites add network and render time, which dominate and are identical for both servers; relative gains from fewer round trips shrink as per-action browser time grows.
 - The Chromium here is Playwright's headless build, not branded Chrome, and the extension is this repo's reimplementation. **The original Web Store extension was not benchmarked** (loading it needs a manual Connect click in a profile where it is installed).
 - The mock-extension numbers use a zero-latency extension and therefore exaggerate protocol overhead relative to real use; they are valid for round-trip counts, not as user-visible latency.

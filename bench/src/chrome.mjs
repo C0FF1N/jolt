@@ -95,11 +95,13 @@ export async function launchChrome({ extensionDir, debugPort = 19222, headless =
   // navigating to a chrome-extension:// URL directly is blocked.
   let extensionId;
   let sw;
+  const swSessions = [];
   for (let i = 0; i < 100 && !extensionId; i++) {
     const { targetInfos } = await cdp.send("Target.getTargets");
     for (const t of targetInfos.filter((t) => t.type === "service_worker" && t.url.startsWith("chrome-extension://"))) {
       try {
         const session = await attach(t.targetId);
+        swSessions.push(session);
         const name = await evalIn(session, "chrome.runtime.getManifest().name");
         if (name === "Browser MCP Turbo (unofficial)") {
           extensionId = new URL(t.url).host;
@@ -129,6 +131,11 @@ export async function launchChrome({ extensionDir, debugPort = 19222, headless =
     if (!ready) await sleep(100);
   }
   if (!ready) throw new Error("Extension popup page never exposed chrome.tabs");
+  // An attached DevTools session keeps a service worker alive, which would hide idle-eviction
+  // behaviour; detach every worker session now that setup is done.
+  for (const sessionId of swSessions) {
+    await cdp.send("Target.detachFromTarget", { sessionId }).catch(() => undefined);
+  }
 
   return {
     exe,
@@ -155,6 +162,9 @@ export async function launchChrome({ extensionDir, debugPort = 19222, headless =
         `chrome.runtime.sendMessage({type:'connect', tabId:${tabId}, port:${port}}).then(JSON.stringify)`,
       );
       return JSON.parse(status);
+    },
+    async closeTab(tabId) {
+      await evalIn(popup, `chrome.tabs.remove(${Number(tabId)}).then(() => true)`);
     },
     async disconnect() {
       await evalIn(popup, "chrome.runtime.sendMessage({type:'disconnect'}).then(JSON.stringify)");

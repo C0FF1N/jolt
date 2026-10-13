@@ -1,11 +1,11 @@
 import { type AXNode, DEFAULT_LIMITS, type SnapshotLimits, buildSnapshot } from "./aria";
-import { resolveKey } from "./keys";
+import { resolveChord } from "./keys";
 
 /** The only browser surface the handlers need; implemented over chrome.debugger / chrome.tabs. */
 export interface Cdp {
   send<T = any>(method: string, params?: Record<string, unknown>): Promise<T>;
-  /** Resolves with the next event named `method`, or rejects after timeoutMs. */
-  once(method: string, timeoutMs: number): Promise<unknown>;
+  /** Resolves with the next event named any of `methods`, or rejects after timeoutMs. */
+  once(methods: string | string[], timeoutMs: number): Promise<unknown>;
   tab(): Promise<{ url: string; title: string }>;
 }
 
@@ -19,6 +19,7 @@ export type HandlerDeps = {
 
 type Payload = Record<string, any>;
 const NAV_TIMEOUT_MS = 15_000;
+const MAX_VALUE_CHECKS = 50;
 
 export function createHandlers({ cdp, consoleLog, limits }: HandlerDeps) {
   let refs = new Map<string, number>();
@@ -27,9 +28,46 @@ export function createHandlers({ cdp, consoleLog, limits }: HandlerDeps) {
 
   async function snapshot(): Promise<string> {
     const { nodes } = await cdp.send<{ nodes: AXNode[] }>("Accessibility.getFullAXTree");
+    await redactPasswordValues(nodes);
     const built = buildSnapshot(nodes, lim);
     refs = built.refs;
     return built.yaml;
+  }
+
+  /**
+   * The accessibility tree cannot tell us an <input> is a password field, so look
+   * at the DOM for every text box that currently has a value and drop passwords.
+   * Bounded: at most MAX_VALUE_CHECKS lookups per snapshot; beyond that values are
+   * dropped (fail closed) rather than risk leaking one.
+   */
+  async function redactPasswordValues(nodes: AXNode[]): Promise<void> {
+    const withValue = nodes.filter(
+      (n) =>
+        n.backendDOMNodeId !== undefined &&
+        n.value?.value !== undefined &&
+        String(n.value.value) !== "" &&
+        ["textbox", "searchbox", "combobox", "spinbutton"].includes(String(n.role?.value)),
+    );
+    await Promise.all(
+      withValue.map(async (n, i) => {
+        if (i >= MAX_VALUE_CHECKS) {
+          n.value = undefined;
+          return;
+        }
+        try {
+          const { node } = await cdp.send<{ node: { attributes?: string[] } }>("DOM.describeNode", {
+            backendNodeId: n.backendDOMNodeId,
+          });
+          const attrs = node.attributes ?? [];
+          const typeIdx = attrs.findIndex((a, k) => k % 2 === 0 && a === "type");
+          if (typeIdx >= 0 && String(attrs[typeIdx + 1]).toLowerCase() === "password") {
+            n.value = undefined;
+          }
+        } catch {
+          n.value = undefined; // unknown element type: fail closed
+        }
+      }),
+    );
   }
 
   function backendId(ref: string): number {
@@ -85,7 +123,11 @@ export function createHandlers({ cdp, consoleLog, limits }: HandlerDeps) {
   async function navigateAndWait(start: () => Promise<unknown>): Promise<void> {
     refs = new Map(); // refs from the old document are stale after navigation
     // Register the load listener BEFORE starting navigation so a fast load is not missed.
-    const loaded = cdp.once("Page.loadEventFired", NAV_TIMEOUT_MS).catch(() => "timeout");
+    // Same-document navigations (hash change, history.pushState, SPA back/forward) never fire
+    // "load", so they must also end the wait or each one would stall for the full cap.
+    const loaded = cdp
+      .once(["Page.loadEventFired", "Page.navigatedWithinDocument"], NAV_TIMEOUT_MS)
+      .catch(() => "timeout");
     const result = (await start()) as { errorText?: string } | undefined;
     if (result?.errorText) {
       throw new Error(`Navigation failed: ${result.errorText}`);
@@ -95,18 +137,34 @@ export function createHandlers({ cdp, consoleLog, limits }: HandlerDeps) {
   }
 
   async function pressKeyName(name: string) {
-    const k = resolveKey(name);
-    const base = {
-      key: k.key,
-      code: k.code,
-      windowsVirtualKeyCode: k.windowsVirtualKeyCode,
-    };
-    await cdp.send("Input.dispatchKeyEvent", {
-      type: k.text ? "keyDown" : "rawKeyDown",
-      ...base,
-      ...(k.text ? { text: k.text } : {}),
-    });
-    await cdp.send("Input.dispatchKeyEvent", { type: "keyUp", ...base });
+    const chord = resolveChord(name);
+    type K = { key: string; code: string; windowsVirtualKeyCode: number; text?: string };
+    const dispatch = (type: string, k: K, modifiers: number) =>
+      cdp.send("Input.dispatchKeyEvent", {
+        type,
+        key: k.key,
+        code: k.code,
+        windowsVirtualKeyCode: k.windowsVirtualKeyCode,
+        modifiers,
+        ...(type === "keyDown" && k.text ? { text: k.text } : {}),
+      });
+    const bitFor = (key: string): number => ({ Alt: 1, Control: 2, Meta: 4, Shift: 8 })[key as "Alt"] ?? 0;
+    let held = 0;
+    try {
+      for (const m of chord.mods) {
+        held |= bitFor(m.key);
+        await dispatch("rawKeyDown", m, held);
+      }
+      const k = chord.key;
+      await dispatch(k.text ? "keyDown" : "rawKeyDown", k, chord.modifiers);
+      await dispatch("keyUp", k, chord.modifiers);
+    } finally {
+      // Always release held modifiers, even if the key event itself failed.
+      for (const m of [...chord.mods].reverse()) {
+        await dispatch("keyUp", m, held).catch(() => undefined);
+        held &= ~bitFor(m.key);
+      }
+    }
   }
 
   const handlers: Record<string, (p: Payload) => Promise<unknown>> = {
@@ -119,8 +177,8 @@ export function createHandlers({ cdp, consoleLog, limits }: HandlerDeps) {
     },
 
     browser_navigate: async ({ url }) => {
-      if (typeof url !== "string" || !/^(https?|file|about|chrome):/i.test(url)) {
-        throw new Error('Navigation needs an absolute URL such as "https://example.com".');
+      if (typeof url !== "string" || !(/^https?:\/\//i.test(url) || url === "about:blank")) {
+        throw new Error('Navigation needs an http(s) URL such as "https://example.com" (or about:blank).');
       }
       await navigateAndWait(() => cdp.send("Page.navigate", { url }));
     },
@@ -148,7 +206,9 @@ export function createHandlers({ cdp, consoleLog, limits }: HandlerDeps) {
         functionDeclaration: `function(){ if (typeof this.select === 'function') this.select();
           else if (this.isContentEditable) { const s = getSelection(); s.selectAllChildren(this); } }`,
       });
-      await cdp.send("Input.insertText", { text: String(text ?? "") });
+      // insertText("") does not delete a selection; use Delete so empty text clears the field.
+      if (text === undefined || text === null || text === "") await pressKeyName("Delete");
+      else await cdp.send("Input.insertText", { text: String(text) });
       if (submit) await pressKeyName("Enter");
     },
     browser_select_option: async ({ ref, values }) => {
@@ -207,7 +267,15 @@ export function createHandlers({ cdp, consoleLog, limits }: HandlerDeps) {
         awaitPromise: true,
         returnByValue: true,
       });
-      if (res.exceptionDetails) throw new Error("timed out");
+      if (res.exceptionDetails) {
+        const d = res.exceptionDetails as { exception?: { description?: string }; text?: string };
+        const detail = String(d.exception?.description ?? d.text ?? "");
+        // Our own timer rejects with "timed out"; anything else means the page changed under us.
+        if (/timed out/i.test(detail)) throw new Error("timed out");
+        throw new Error(
+          `The page changed while waiting (${detail.split("\n")[0] || "evaluation failed"}). Take a new snapshot and retry.`,
+        );
+      }
     },
     browser_screenshot: async () => {
       const { data } = await cdp.send<{ data: string }>("Page.captureScreenshot", {

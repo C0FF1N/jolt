@@ -113,6 +113,8 @@ L();
 L("## Limitations (read before quoting any number)");
 L();
 L("- Single machine, single run set, not isolated from other processes; no confidence intervals. Differences under ~10% are within run-to-run noise.");
+L("- Repeated runs of the same code differed by up to about ±10% for individual standard-tool scenarios (e.g. `navigate` read 23.5, 22.8, 23.2 and 25.4 ms across four runs). Do not read a difference of that size in one scenario as an improvement or a regression.");
+L("- The `status` scenario calls `browser_get_console_logs`; its response bytes depend on whatever console output had accumulated in the tab, not on the server, so compare its latency only.");
 L("- Fixtures are small local pages served from loopback. Real sites add network and render time, which dominate and are identical for both servers; relative gains from fewer round trips shrink as per-action browser time grows.");
 L("- The Chromium here is Playwright's headless build, not branded Chrome, and the extension is this repo's reimplementation. **The original Web Store extension was not benchmarked** (loading it needs a manual Connect click in a profile where it is installed).");
 L("- The mock-extension numbers use a zero-latency extension and therefore exaggerate protocol overhead relative to real use; they are valid for round-trip counts, not as user-visible latency.");

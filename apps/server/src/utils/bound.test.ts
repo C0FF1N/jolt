@@ -41,4 +41,22 @@ describe("boundText", () => {
     expect(r.truncated).toBe(true);
     expect(r.nextOffset).toBe(100);
   });
+
+  it("pages through an oversized single line without repeating a page", () => {
+    const long = "y".repeat(250);
+    let offset = 0;
+    let rebuilt = "";
+    for (let guard = 0; guard < 10; guard++) {
+      const r = boundText(long, { maxChars: 100, offset });
+      rebuilt += r.text;
+      if (!r.truncated) break;
+      expect(r.nextOffset).toBeGreaterThan(offset);
+      offset = r.nextOffset;
+    }
+    expect(rebuilt).toBe(long);
+  });
+
+  it("honours an arbitrary mid-line offset", () => {
+    expect(boundText("abc\ndef", { maxChars: 0, offset: 5 }).text).toBe("ef");
+  });
 });

@@ -40,7 +40,7 @@ Inbound frames are validated (zod) and oversized frames (> 64 MiB) are dropped; 
 | Need | Mechanism |
 |---|---|
 | Wait for text to appear/disappear | `browser_wait_for` → in-page `MutationObserver` + timer, both torn down on success and on timeout (`handlers.ts`). Timeout error names the operation and the condition. |
-| Navigation | Listener for `Page.loadEventFired` is registered **before** `Page.navigate`; capped at 15 s, then the call returns (the page may still be loading) instead of hanging. |
+| Navigation | A listener for `Page.loadEventFired` **or** `Page.navigatedWithinDocument` (hash changes, `pushState`, SPA back/forward, which never fire `load`) is registered **before** the navigation starts; capped at 15 s, then the call returns (the page may still be loading) instead of hanging. |
 | SPA transitions | Use `browser_wait_for` on the expected text; the `load` event does not imply an SPA is ready, and `networkidle` is deliberately not used. |
 | Explicit sleep | `browser_wait` is unchanged, but its transport timeout is now `time + 10 s`, so waits over 30 s work. |
 
@@ -50,9 +50,15 @@ Inbound frames are validated (zod) and oversized frames (> 64 MiB) are dropped; 
 - Timers cleared on settle; listeners removed when a link is closed or replaced.
 - Extension: console buffer ring (500 entries), waiters map cleared on disconnect, debugger detached on tab
   close, `onDetach` (user dismissed the banner) and explicit disconnect; reconnect uses capped exponential
-  backoff (1→15 s, max 8 tries) **only while a tab is connected**; no heartbeat (an open WebSocket keeps the MV3
-  worker alive; if it is evicted, `resume()` rebuilds the socket from `chrome.storage.session` if the debugger
-  is still attached).
+  backoff (1→15 s, max 8 tries, then the tab is released and the popup shows an error) **only while a tab is
+  connected**. connect/disconnect/resume are serialised, and element refs are reset on every connect.
+- MV3 lifetime: Chrome's documentation says only WebSocket *messages* reset a worker's ~30 s idle timer, so while
+  connected the extension sends a tiny `{"type":"ping"}` frame every 20 s (the server ignores it). **This was added
+  on a code reviewer's advice and is not shown to be necessary here:** with the keepalive disabled and no DevTools
+  session attached, the connection still survived 75 s idle in headless Chromium 153 (see `bench/src/real-resilience.mjs`).
+  It is kept as a cheap precaution (~15 bytes per 20 s, only while connected); branded, headed Chrome was not tested.
+  If the worker is evicted anyway, `resume()` rebuilds the socket from `chrome.storage.session` when the debugger is
+  still attached (verified for server restarts: the extension reconnects on its own in about 1 s).
 - Server bound: one connected extension; a new connection replaces the old and rejects its pending work with
   `REPLACED`.
 
@@ -76,7 +82,7 @@ to a `backendDOMNodeId`; it is resolved immediately before use, so a ref whose n
 | Patch the minified Web Store extension | Unreadable, proprietary, unmaintainable. |
 | Compress WebSocket payloads | Loopback; the cost would exceed the saving at observed payload sizes (≤ ~200 KB). Not benchmarked further. |
 | Global snapshot cache | Would return stale pages; per-request reuse is already achieved by the 1-round-trip bundle. |
-| Heartbeat / aggressive reconnect | No evidence needed; MV3 worker stays alive with an active socket. |
+| Aggressive reconnect loops | Reconnects are capped (8 tries, backoff to 15 s) and only while a tab is connected. (A 20 s keepalive ping *was* added; see above.) |
 | `networkidle` as readiness | Unreliable for SPAs and long-poll pages. |
 | Arbitrary JS action (`evaluate`) in batch | Safety: untrusted model input must not run as code. |
 | Batch executed inside the extension | Server-side sequencing already yields 1 call for the model and 1 round trip per action; the extra protocol surface was not justified by measurements. |

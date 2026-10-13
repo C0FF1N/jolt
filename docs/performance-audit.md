@@ -108,4 +108,5 @@ are**. This is why the optimisations target those and not micro-optimisation of 
 | P1 | `browser_batch` (≤ 20 actions, sequential, per-action results) | Done |
 | P2 | Per-tab write serialisation | Done |
 | P2 | Opt-in tracing | Done |
-| — | Compression, caches, heartbeats, `networkidle` | Rejected, see [performance-architecture.md](performance-architecture.md) |
+| — | Compression, snapshot caches, aggressive reconnects, `networkidle` | Rejected, see [performance-architecture.md](performance-architecture.md) |
+| P2 | Review follow-ups: replaced-socket crash/leak, shutdown stall, paging loop on oversized lines, same-document navigation stall, key chords, stale refs across tabs, connect/reconnect races, password redaction, stricter navigation schemes, console-buffer leak | Done; see [security.md](security.md) |
