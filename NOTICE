@@ -2,7 +2,7 @@ Browser MCP Turbo
 This work is derived from the Browser MCP server (https://github.com/browsermcp/mcp),
 Copyright Browser MCP, licensed under the Apache License, Version 2.0 (see LICENSE).
 
-Modified files are marked by the git history of this repository (base commit 175a01c is the
+Modified files are marked by the git history of this repository (base commit c29e923 is the
 unmodified upstream server). The packages under packages/ are reconstructions of runtime modules
 that the upstream server inlines in its published npm bundle (@browsermcp/mcp@0.1.3).
 
