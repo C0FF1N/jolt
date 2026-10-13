@@ -1,0 +1,9 @@
+{
+  "name": "@r2r/messaging",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": { "./*": "./src/*.ts" },
+  "dependencies": { "ws": "^8.18.1" },
+  "devDependencies": { "@repo/messaging": "workspace:*", "@types/ws": "^8.18.0" }
+}
