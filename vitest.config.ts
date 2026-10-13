@@ -6,7 +6,7 @@ export default defineConfig({
     alias: { "@": path.resolve(__dirname, "apps/server/src") },
   },
   test: {
-    include: ["apps/server/src/**/*.test.ts", "bench/src/**/*.test.ts"],
+    include: ["apps/server/src/**/*.test.ts", "apps/extension/src/**/*.test.ts", "bench/src/**/*.test.ts"],
     testTimeout: 15000,
   },
 });

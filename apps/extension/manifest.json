@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Browser MCP Turbo (unofficial)",
+  "version": "0.1.0",
+  "description": "Independent reimplementation of the Browser MCP extension protocol. Connects one tab you choose to a local MCP server on 127.0.0.1.",
+  "minimum_chrome_version": "116",
+  "permissions": ["debugger", "tabs", "storage"],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "action": { "default_popup": "popup.html", "default_title": "Browser MCP Turbo" }
+}
