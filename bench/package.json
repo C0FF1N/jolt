@@ -1,1 +1,13 @@
-{ "name": "@bench/harness", "private": true, "type": "module", "version": "0.0.0" }
+{
+  "name": "@bench/harness",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "scripts": {
+    "bench": "node src/run.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.8.0",
+    "ws": "^8.18.1"
+  }
+}
