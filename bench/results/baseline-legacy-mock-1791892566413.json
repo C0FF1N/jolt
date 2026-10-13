@@ -2,7 +2,7 @@
   "target": "baseline",
   "label": "legacy",
   "caps": [],
-  "entry": "C:\\Users\\Administrator\\Documents\\browsermcp-turbo\\mcp-turbo\\baseline\\dist\\index.js",
+  "entry": "baseline/dist/index.js",
   "rttMs": 0,
   "iterations": 40,
   "warmup": 5,

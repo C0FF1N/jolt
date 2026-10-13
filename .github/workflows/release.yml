@@ -1,0 +1,33 @@
+name: Release
+
+# Push a tag like v0.1.0 to publish a ready-to-use build: the extension zip and a single-file server.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r build
+      - run: pnpm test
+      - name: Package
+        run: |
+          mkdir -p release
+          (cd apps/extension/dist && zip -r ../../../release/browsermcp-turbo-extension.zip .)
+          cp apps/server/dist/browsermcp-turbo.mjs release/browsermcp-turbo-server.mjs
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" release/browsermcp-turbo-extension.zip release/browsermcp-turbo-server.mjs \
+            --title "Browser MCP Turbo ${GITHUB_REF_NAME}" --generate-notes

@@ -1,6 +1,6 @@
 {
   "target": "baseline",
-  "entry": "C:\\Users\\Administrator\\Documents\\browsermcp-turbo\\mcp-turbo\\baseline\\dist\\index.js",
+  "entry": "baseline/dist/index.js",
   "rttMs": 1,
   "iterations": 30,
   "warmup": 5,

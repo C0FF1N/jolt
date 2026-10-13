@@ -98,7 +98,7 @@ function rssMb(pid) {
   } catch { return null; }
 }
 
-const results = { target, label, caps, entry, rttMs, iterations, warmup, coldRuns, scenarios: {}, cold: null };
+const results = { target, label, caps, entry: path.relative(root, entry).split(path.sep).join("/"), rttMs, iterations, warmup, coldRuns, scenarios: {}, cold: null };
 
 // Cold: fresh server process, latency of the very first tool call.
 const coldSamples = [];

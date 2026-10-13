@@ -2,7 +2,7 @@
   "target": "turbo",
   "label": "legacy",
   "caps": [],
-  "entry": "C:\\Users\\Administrator\\Documents\\browsermcp-turbo\\mcp-turbo\\apps\\server\\dist\\index.js",
+  "entry": "apps/server/dist/index.js",
   "rttMs": 0,
   "iterations": 40,
   "warmup": 5,
