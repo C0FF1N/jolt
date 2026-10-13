@@ -17,6 +17,7 @@ export async function startMockExtension({
   rttMs = 1, // simulated extension-side processing per message
   snapshotNodes = 50,
   host = "127.0.0.1",
+  capabilities = [],
 }) {
   const stats = { messages: 0, byType: {} };
   const snapshot = makeSnapshot(snapshotNodes);
@@ -26,6 +27,9 @@ export async function startMockExtension({
     ws.once("open", resolve);
     ws.once("error", reject);
   });
+  if (capabilities.length) {
+    ws.send(JSON.stringify({ type: "hello", payload: { protocolVersion: 2, capabilities } }));
+  }
   ws.on("message", async (data) => {
     const { id, type } = JSON.parse(data.toString());
     stats.messages++;
@@ -36,6 +40,7 @@ export async function startMockExtension({
       case "getUrl": result = "http://127.0.0.1/fixture"; break;
       case "getTitle": result = "Fixture"; break;
       case "browser_snapshot": result = snapshot; break;
+      case "browser_snapshot_bundle": result = { url: "http://127.0.0.1/fixture", title: "Fixture", snapshot }; break;
       case "browser_get_console_logs": result = []; break;
       case "browser_screenshot": result = "iVBORw0KGgo="; break;
       default: result = undefined;

@@ -7,6 +7,7 @@ import { appConfig } from "@repo/config/app.config";
 
 import type { Resource } from "@/resources/resource";
 import { createServerWithTools } from "@/server";
+import * as batch from "@/tools/batch";
 import * as common from "@/tools/common";
 import * as custom from "@/tools/custom";
 import * as snapshot from "@/tools/snapshot";
@@ -22,7 +23,7 @@ function setupExitWatchdog(server: Server) {
   });
 }
 
-const commonTools: Tool[] = [common.pressKey, common.wait];
+const commonTools: Tool[] = [common.pressKey, common.wait, common.waitFor];
 
 const customTools: Tool[] = [custom.getConsoleLogs, custom.screenshot];
 
@@ -37,6 +38,7 @@ const snapshotTools: Tool[] = [
   snapshot.selectOption,
   ...commonTools,
   ...customTools,
+  batch.batch,
 ];
 
 const resources: Resource[] = [];

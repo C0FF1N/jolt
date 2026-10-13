@@ -1,4 +1,5 @@
-import zodToJsonSchema from "zod-to-json-schema";
+import { z } from "zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
 
 import {
   ClickTool,
@@ -12,41 +13,72 @@ import {
 import type { Context } from "@/context";
 import { captureAriaSnapshot } from "@/utils/aria-snapshot";
 
+import { defineActionTool } from "./define";
 import type { Tool } from "./tool";
+
+const snapshotArgs = SnapshotTool.shape.arguments.extend({
+  maxChars: z
+    .number()
+    .int()
+    .min(0)
+    .optional()
+    .describe("Max characters of snapshot to return (0 = unlimited). Default 200000."),
+  offset: z
+    .number()
+    .int()
+    .min(0)
+    .optional()
+    .describe("Continue a truncated snapshot from this character offset."),
+});
 
 export const snapshot: Tool = {
   schema: {
     name: SnapshotTool.shape.name.value,
     description: SnapshotTool.shape.description.value,
-    inputSchema: zodToJsonSchema(SnapshotTool.shape.arguments),
-  },
-  handle: async (context: Context) => {
-    return await captureAriaSnapshot(context);
-  },
-};
-
-export const click: Tool = {
-  schema: {
-    name: ClickTool.shape.name.value,
-    description: ClickTool.shape.description.value,
-    inputSchema: zodToJsonSchema(ClickTool.shape.arguments),
+    inputSchema: zodToJsonSchema(snapshotArgs),
   },
   handle: async (context: Context, params) => {
-    const validatedParams = ClickTool.shape.arguments.parse(params);
-    await context.sendSocketMessage("browser_click", validatedParams);
-    const snapshot = await captureAriaSnapshot(context);
-    return {
-      content: [
-        {
-          type: "text",
-          text: `Clicked "${validatedParams.element}"`,
-        },
-        ...snapshot.content,
-      ],
-    };
+    const { maxChars, offset } = snapshotArgs.parse(params ?? {});
+    return await captureAriaSnapshot(context, { maxChars, offset });
   },
 };
 
+export const click: Tool = defineActionTool(
+  ClickTool,
+  (a) => ({ action: "click", element: a.element, ref: a.ref }),
+  "status+snapshot",
+);
+
+export const hover: Tool = defineActionTool(
+  HoverTool,
+  (a) => ({ action: "hover", element: a.element, ref: a.ref }),
+  "status+snapshot",
+);
+
+export const type: Tool = defineActionTool(
+  TypeTool,
+  (a) => ({
+    action: "type",
+    element: a.element,
+    ref: a.ref,
+    text: a.text,
+    submit: a.submit,
+  }),
+  "status+snapshot",
+);
+
+export const selectOption: Tool = defineActionTool(
+  SelectOptionTool,
+  (a) => ({
+    action: "select_option",
+    element: a.element,
+    ref: a.ref,
+    values: a.values,
+  }),
+  "status+snapshot",
+);
+
+/** Not registered upstream either (see index.ts); kept for parity. */
 export const drag: Tool = {
   schema: {
     name: DragTool.shape.name.value,
@@ -56,80 +88,14 @@ export const drag: Tool = {
   handle: async (context: Context, params) => {
     const validatedParams = DragTool.shape.arguments.parse(params);
     await context.sendSocketMessage("browser_drag", validatedParams);
-    const snapshot = await captureAriaSnapshot(context);
+    const snap = await captureAriaSnapshot(context);
     return {
       content: [
         {
           type: "text",
           text: `Dragged "${validatedParams.startElement}" to "${validatedParams.endElement}"`,
         },
-        ...snapshot.content,
-      ],
-    };
-  },
-};
-
-export const hover: Tool = {
-  schema: {
-    name: HoverTool.shape.name.value,
-    description: HoverTool.shape.description.value,
-    inputSchema: zodToJsonSchema(HoverTool.shape.arguments),
-  },
-  handle: async (context: Context, params) => {
-    const validatedParams = HoverTool.shape.arguments.parse(params);
-    await context.sendSocketMessage("browser_hover", validatedParams);
-    const snapshot = await captureAriaSnapshot(context);
-    return {
-      content: [
-        {
-          type: "text",
-          text: `Hovered over "${validatedParams.element}"`,
-        },
-        ...snapshot.content,
-      ],
-    };
-  },
-};
-
-export const type: Tool = {
-  schema: {
-    name: TypeTool.shape.name.value,
-    description: TypeTool.shape.description.value,
-    inputSchema: zodToJsonSchema(TypeTool.shape.arguments),
-  },
-  handle: async (context: Context, params) => {
-    const validatedParams = TypeTool.shape.arguments.parse(params);
-    await context.sendSocketMessage("browser_type", validatedParams);
-    const snapshot = await captureAriaSnapshot(context);
-    return {
-      content: [
-        {
-          type: "text",
-          text: `Typed "${validatedParams.text}" into "${validatedParams.element}"`,
-        },
-        ...snapshot.content,
-      ],
-    };
-  },
-};
-
-export const selectOption: Tool = {
-  schema: {
-    name: SelectOptionTool.shape.name.value,
-    description: SelectOptionTool.shape.description.value,
-    inputSchema: zodToJsonSchema(SelectOptionTool.shape.arguments),
-  },
-  handle: async (context: Context, params) => {
-    const validatedParams = SelectOptionTool.shape.arguments.parse(params);
-    await context.sendSocketMessage("browser_select_option", validatedParams);
-    const snapshot = await captureAriaSnapshot(context);
-    return {
-      content: [
-        {
-          type: "text",
-          text: `Selected option in "${validatedParams.element}"`,
-        },
-        ...snapshot.content,
+        ...snap.content,
       ],
     };
   },

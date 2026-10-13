@@ -1,0 +1,320 @@
+{
+  "target": "turbo",
+  "label": "bundle",
+  "caps": [
+    "snapshotBundle"
+  ],
+  "entry": "C:\\Users\\Administrator\\Documents\\browsermcp-turbo\\mcp-turbo\\apps\\server\\dist\\index.js",
+  "rttMs": 0,
+  "iterations": 40,
+  "warmup": 5,
+  "coldRuns": 5,
+  "scenarios": {
+    "status": {
+      "tool_calls_per_iter": 1,
+      "latency_ms": {
+        "n": 40,
+        "min": 0.5497000000000298,
+        "median": 0.7264000000000124,
+        "p95": 0.9246000000002823,
+        "max": 1.0313999999998487,
+        "mean": 0.7422950000000356
+      },
+      "response_bytes": {
+        "n": 40,
+        "min": 0,
+        "median": 0,
+        "p95": 0,
+        "max": 0,
+        "mean": 0
+      },
+      "ws_round_trips_per_iter": 1,
+      "ws_by_type": {
+        "browser_get_console_logs": 40
+      },
+      "iterations_per_sec": 1343.7473754934106,
+      "failure_rate": 0,
+      "server_rss_mb": 73
+    },
+    "snapshot_small": {
+      "tool_calls_per_iter": 1,
+      "latency_ms": {
+        "n": 40,
+        "min": 0.5994000000000597,
+        "median": 0.7629000000001724,
+        "p95": 0.9542000000001281,
+        "max": 1.182299999999941,
+        "mean": 0.7841100000000096
+      },
+      "response_bytes": {
+        "n": 40,
+        "min": 1776,
+        "median": 1776,
+        "p95": 1776,
+        "max": 1776,
+        "mean": 1776
+      },
+      "ws_round_trips_per_iter": 1,
+      "ws_by_type": {
+        "browser_snapshot_bundle": 40
+      },
+      "iterations_per_sec": 1272.4710433308305,
+      "failure_rate": 0,
+      "server_rss_mb": 74
+    },
+    "snapshot_large": {
+      "tool_calls_per_iter": 1,
+      "latency_ms": {
+        "n": 40,
+        "min": 3.757499999999709,
+        "median": 4.623899999999594,
+        "p95": 6.508300000000418,
+        "max": 7.844099999999344,
+        "mean": 4.863022500000056
+      },
+      "response_bytes": {
+        "n": 40,
+        "min": 187880,
+        "median": 187880,
+        "p95": 187880,
+        "max": 187880,
+        "mean": 187880
+      },
+      "ws_round_trips_per_iter": 1,
+      "ws_by_type": {
+        "browser_snapshot_bundle": 40
+      },
+      "iterations_per_sec": 205.54952895756065,
+      "failure_rate": 0,
+      "server_rss_mb": 98
+    },
+    "element_lookup_hover": {
+      "tool_calls_per_iter": 1,
+      "latency_ms": {
+        "n": 40,
+        "min": 0.707300000000032,
+        "median": 0.8876000000000204,
+        "p95": 1.355600000000777,
+        "max": 2.338600000000042,
+        "mean": 0.9577975000000152
+      },
+      "response_bytes": {
+        "n": 40,
+        "min": 1797,
+        "median": 1797,
+        "p95": 1797,
+        "max": 1797,
+        "mean": 1797
+      },
+      "ws_round_trips_per_iter": 2,
+      "ws_by_type": {
+        "browser_hover": 40,
+        "browser_snapshot_bundle": 40
+      },
+      "iterations_per_sec": 1042.5164261494397,
+      "failure_rate": 0,
+      "server_rss_mb": 73
+    },
+    "click": {
+      "tool_calls_per_iter": 1,
+      "latency_ms": {
+        "n": 40,
+        "min": 0.5702999999994063,
+        "median": 0.902299999999741,
+        "p95": 1.1252999999996973,
+        "max": 1.1697000000003754,
+        "mean": 0.8837575000000243
+      },
+      "response_bytes": {
+        "n": 40,
+        "min": 1792,
+        "median": 1792,
+        "p95": 1792,
+        "max": 1792,
+        "mean": 1792
+      },
+      "ws_round_trips_per_iter": 2,
+      "ws_by_type": {
+        "browser_click": 40,
+        "browser_snapshot_bundle": 40
+      },
+      "iterations_per_sec": 1129.7137305406923,
+      "failure_rate": 0,
+      "server_rss_mb": 73
+    },
+    "type": {
+      "tool_calls_per_iter": 1,
+      "latency_ms": {
+        "n": 40,
+        "min": 0.6810999999997875,
+        "median": 0.8158999999996013,
+        "p95": 1.141500000000633,
+        "max": 1.256999999999607,
+        "mean": 0.8763649999999871
+      },
+      "response_bytes": {
+        "n": 40,
+        "min": 1803,
+        "median": 1803,
+        "p95": 1803,
+        "max": 1803,
+        "mean": 1803
+      },
+      "ws_round_trips_per_iter": 2,
+      "ws_by_type": {
+        "browser_type": 40,
+        "browser_snapshot_bundle": 40
+      },
+      "iterations_per_sec": 1139.3998780842076,
+      "failure_rate": 0,
+      "server_rss_mb": 73
+    },
+    "navigate": {
+      "tool_calls_per_iter": 1,
+      "latency_ms": {
+        "n": 40,
+        "min": 0.5866000000005442,
+        "median": 0.8341000000000349,
+        "p95": 1.4815999999991618,
+        "max": 1.5504000000000815,
+        "mean": 0.922287499999993
+      },
+      "response_bytes": {
+        "n": 40,
+        "min": 1776,
+        "median": 1776,
+        "p95": 1776,
+        "max": 1776,
+        "mean": 1776
+      },
+      "ws_round_trips_per_iter": 2,
+      "ws_by_type": {
+        "browser_navigate": 40,
+        "browser_snapshot_bundle": 40
+      },
+      "iterations_per_sec": 1082.9865520144845,
+      "failure_rate": 0,
+      "server_rss_mb": 74
+    },
+    "click_snapshot_none": {
+      "tool_calls_per_iter": 1,
+      "latency_ms": {
+        "n": 40,
+        "min": 0.4532999999992171,
+        "median": 0.6244999999998981,
+        "p95": 0.8553999999985535,
+        "max": 0.8723000000009051,
+        "mean": 0.642792499999905
+      },
+      "response_bytes": {
+        "n": 40,
+        "min": 16,
+        "median": 16,
+        "p95": 16,
+        "max": 16,
+        "mean": 16
+      },
+      "ws_round_trips_per_iter": 1,
+      "ws_by_type": {
+        "browser_click": 40
+      },
+      "iterations_per_sec": 1553.32567025999,
+      "failure_rate": 0,
+      "server_rss_mb": 72
+    },
+    "batch_10": {
+      "tool_calls_per_iter": 1,
+      "latency_ms": {
+        "n": 40,
+        "min": 1.9336000000002969,
+        "median": 2.3720999999986816,
+        "p95": 3.228900000000067,
+        "max": 3.721299999999246,
+        "mean": 2.4585400000000392
+      },
+      "response_bytes": {
+        "n": 40,
+        "min": 1052,
+        "median": 1052,
+        "p95": 1052,
+        "max": 1052,
+        "mean": 1052
+      },
+      "ws_round_trips_per_iter": 12,
+      "ws_by_type": {
+        "browser_navigate": 40,
+        "browser_click": 200,
+        "browser_type": 80,
+        "browser_hover": 40,
+        "browser_press_key": 40,
+        "getUrl": 40,
+        "getTitle": 40
+      },
+      "iterations_per_sec": 406.5416618813312,
+      "failure_rate": 0,
+      "server_rss_mb": 78
+    },
+    "sequence_10": {
+      "tool_calls_per_iter": 10,
+      "latency_ms": {
+        "n": 40,
+        "min": 4.360000000000582,
+        "median": 6.625700000000506,
+        "p95": 8.700299999998606,
+        "max": 10.735099999999875,
+        "mean": 6.78737000000001
+      },
+      "response_bytes": {
+        "n": 40,
+        "min": 16132,
+        "median": 16132,
+        "p95": 16132,
+        "max": 16132,
+        "mean": 16132
+      },
+      "ws_round_trips_per_iter": 18,
+      "ws_by_type": {
+        "browser_navigate": 40,
+        "browser_snapshot_bundle": 360,
+        "browser_click": 160,
+        "browser_type": 80,
+        "browser_hover": 40,
+        "browser_press_key": 40
+      },
+      "iterations_per_sec": 147.29227094855105,
+      "failure_rate": 0,
+      "server_rss_mb": 93
+    },
+    "repeated_100_clicks": {
+      "latency_ms": {
+        "n": 100,
+        "min": 0.4878000000007887,
+        "median": 0.7793000000001484,
+        "p95": 1.1484999999993306,
+        "max": 4.8233000000000175,
+        "mean": 0.8449369999998817
+      },
+      "first_10_median": 1.0544000000008964,
+      "last_10_median": 0.6679000000003725
+    }
+  },
+  "cold": {
+    "first_snapshot_ms": {
+      "n": 5,
+      "min": 3.9479999999998654,
+      "median": 4.5452000000000226,
+      "p95": 5.468900000000019,
+      "max": 5.468900000000019,
+      "mean": 4.68863999999993
+    }
+  },
+  "env": {
+    "node": "v24.14.0",
+    "os": "Windows_NT 10.0.26200",
+    "cpu": "AMD Ryzen 7 7840HS w/ Radeon 780M Graphics     ",
+    "cores": 16,
+    "totalMemGb": 15,
+    "date": "2026-10-13T11:24:33.997Z",
+    "notes": "Mock extension: extension-side time is SIMULATED (rttMs per message). Measures server+protocol overhead only, not Chrome."
+  }
+}

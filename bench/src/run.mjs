@@ -27,6 +27,8 @@ const rttMs = Number(args.rtt ?? 1);
 const port = Number(args.port ?? (target === "baseline" ? 19109 : 19209));
 const entry = path.join(root, target === "baseline" ? "baseline" : "apps/server", "dist/index.js");
 
+const caps = (args.caps ?? "").split(",").filter(Boolean); // e.g. snapshotBundle
+const label = args.label ?? (caps.length ? "bundle" : "legacy");
 const SMALL = 50;
 const LARGE = 5000;
 
@@ -39,6 +41,19 @@ const scenarios = {
   click: [["browser_click", el]],
   type: [["browser_type", { ...el, text: "hello", submit: false }]],
   navigate: [["browser_navigate", { url: "http://127.0.0.1/x" }]],
+  ...(target === "turbo"
+    ? {
+        click_snapshot_none: [["browser_click", { ...el, snapshot: "none" }]],
+        batch_10: [["browser_batch", { finalSnapshot: "summary", actions: [
+          { action: "navigate", url: "http://127.0.0.1/x" },
+          { action: "click", ...el }, { action: "type", ...el, text: "a" },
+          { action: "click", ...el }, { action: "type", ...el, text: "b" },
+          { action: "hover", ...el }, { action: "click", ...el },
+          { action: "press_key", key: "Enter" }, { action: "click", ...el },
+          { action: "click", ...el },
+        ] }]],
+      }
+    : {}),
   sequence_10: [
     ["browser_navigate", { url: "http://127.0.0.1/x" }],
     ["browser_click", el], ["browser_type", { ...el, text: "a", submit: false }],
@@ -67,7 +82,7 @@ async function withServer(nodes, fn) {
   // wait for WS server then attach mock extension
   let ext;
   for (let i = 0; i < 100 && !ext; i++) {
-    try { ext = await startMockExtension({ port, rttMs, snapshotNodes: nodes }); }
+    try { ext = await startMockExtension({ port, rttMs, snapshotNodes: nodes, capabilities: caps }); }
     catch { await new Promise((r) => setTimeout(r, 50)); }
   }
   if (!ext) throw new Error("mock extension could not connect");
@@ -83,7 +98,7 @@ function rssMb(pid) {
   } catch { return null; }
 }
 
-const results = { target, entry, rttMs, iterations, warmup, coldRuns, scenarios: {}, cold: null };
+const results = { target, label, caps, entry, rttMs, iterations, warmup, coldRuns, scenarios: {}, cold: null };
 
 // Cold: fresh server process, latency of the very first tool call.
 const coldSamples = [];
@@ -152,6 +167,6 @@ results.env = {
   notes: "Mock extension: extension-side time is SIMULATED (rttMs per message). Measures server+protocol overhead only, not Chrome.",
 };
 mkdirSync(path.join(here, "../results"), { recursive: true });
-const file = path.join(here, "../results", `${target}-mock-${Date.now()}.json`);
+const file = path.join(here, "../results", `${target}-${label}-mock-${Date.now()}.json`);
 writeFileSync(file, JSON.stringify(results, null, 2));
 console.error("wrote", file);

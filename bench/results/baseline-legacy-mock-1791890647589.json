@@ -1,0 +1,274 @@
+{
+  "target": "baseline",
+  "label": "legacy",
+  "caps": [],
+  "entry": "C:\\Users\\Administrator\\Documents\\browsermcp-turbo\\mcp-turbo\\baseline\\dist\\index.js",
+  "rttMs": 0,
+  "iterations": 40,
+  "warmup": 5,
+  "coldRuns": 5,
+  "scenarios": {
+    "status": {
+      "tool_calls_per_iter": 1,
+      "latency_ms": {
+        "n": 40,
+        "min": 0.4691000000002532,
+        "median": 0.6032999999988533,
+        "p95": 0.9755999999997584,
+        "max": 1.115799999999581,
+        "mean": 0.6479924999999639
+      },
+      "response_bytes": {
+        "n": 40,
+        "min": 0,
+        "median": 0,
+        "p95": 0,
+        "max": 0,
+        "mean": 0
+      },
+      "ws_round_trips_per_iter": 1,
+      "ws_by_type": {
+        "browser_get_console_logs": 40
+      },
+      "iterations_per_sec": 1537.095887884206,
+      "failure_rate": 0,
+      "server_rss_mb": 70
+    },
+    "snapshot_small": {
+      "tool_calls_per_iter": 1,
+      "latency_ms": {
+        "n": 40,
+        "min": 0.8928000000014435,
+        "median": 1.155400000001464,
+        "p95": 1.430500000000393,
+        "max": 1.6346000000012282,
+        "mean": 1.1726600000001326
+      },
+      "response_bytes": {
+        "n": 40,
+        "min": 1776,
+        "median": 1776,
+        "p95": 1776,
+        "max": 1776,
+        "mean": 1776
+      },
+      "ws_round_trips_per_iter": 3,
+      "ws_by_type": {
+        "getUrl": 40,
+        "getTitle": 40,
+        "browser_snapshot": 40
+      },
+      "iterations_per_sec": 848.2177883993212,
+      "failure_rate": 0,
+      "server_rss_mb": 69
+    },
+    "snapshot_large": {
+      "tool_calls_per_iter": 1,
+      "latency_ms": {
+        "n": 40,
+        "min": 4.641899999998714,
+        "median": 5.35399999999936,
+        "p95": 7.386300000001938,
+        "max": 7.97190000000046,
+        "mean": 5.609107499999846
+      },
+      "response_bytes": {
+        "n": 40,
+        "min": 187880,
+        "median": 187880,
+        "p95": 187880,
+        "max": 187880,
+        "mean": 187880
+      },
+      "ws_round_trips_per_iter": 3,
+      "ws_by_type": {
+        "getUrl": 40,
+        "getTitle": 40,
+        "browser_snapshot": 40
+      },
+      "iterations_per_sec": 178.22397139148939,
+      "failure_rate": 0,
+      "server_rss_mb": 75
+    },
+    "element_lookup_hover": {
+      "tool_calls_per_iter": 1,
+      "latency_ms": {
+        "n": 40,
+        "min": 1.1270000000004075,
+        "median": 1.3868000000002212,
+        "p95": 1.7232000000003609,
+        "max": 2.0944999999992433,
+        "mean": 1.439837499999885
+      },
+      "response_bytes": {
+        "n": 40,
+        "min": 1797,
+        "median": 1797,
+        "p95": 1797,
+        "max": 1797,
+        "mean": 1797
+      },
+      "ws_round_trips_per_iter": 4,
+      "ws_by_type": {
+        "browser_hover": 40,
+        "getUrl": 40,
+        "getTitle": 40,
+        "browser_snapshot": 40
+      },
+      "iterations_per_sec": 694.014300164668,
+      "failure_rate": 0,
+      "server_rss_mb": 71
+    },
+    "click": {
+      "tool_calls_per_iter": 1,
+      "latency_ms": {
+        "n": 40,
+        "min": 1.0210000000006403,
+        "median": 1.3062000000027183,
+        "p95": 1.686600000000908,
+        "max": 1.7849000000023807,
+        "mean": 1.3423025000002782
+      },
+      "response_bytes": {
+        "n": 40,
+        "min": 1792,
+        "median": 1792,
+        "p95": 1792,
+        "max": 1792,
+        "mean": 1792
+      },
+      "ws_round_trips_per_iter": 4,
+      "ws_by_type": {
+        "browser_click": 40,
+        "getUrl": 40,
+        "getTitle": 40,
+        "browser_snapshot": 40
+      },
+      "iterations_per_sec": 744.3660792377553,
+      "failure_rate": 0,
+      "server_rss_mb": 70
+    },
+    "type": {
+      "tool_calls_per_iter": 1,
+      "latency_ms": {
+        "n": 40,
+        "min": 0.9980999999970663,
+        "median": 1.3060000000041327,
+        "p95": 1.6480000000010477,
+        "max": 1.919499999996333,
+        "mean": 1.3555875000000015
+      },
+      "response_bytes": {
+        "n": 40,
+        "min": 1803,
+        "median": 1803,
+        "p95": 1803,
+        "max": 1803,
+        "mean": 1803
+      },
+      "ws_round_trips_per_iter": 4,
+      "ws_by_type": {
+        "browser_type": 40,
+        "getUrl": 40,
+        "getTitle": 40,
+        "browser_snapshot": 40
+      },
+      "iterations_per_sec": 736.8572302273702,
+      "failure_rate": 0,
+      "server_rss_mb": 70
+    },
+    "navigate": {
+      "tool_calls_per_iter": 1,
+      "latency_ms": {
+        "n": 40,
+        "min": 0.9101000000009662,
+        "median": 1.368000000002212,
+        "p95": 1.7322000000058324,
+        "max": 2.0135000000009313,
+        "mean": 1.3762500000002547
+      },
+      "response_bytes": {
+        "n": 40,
+        "min": 1776,
+        "median": 1776,
+        "p95": 1776,
+        "max": 1776,
+        "mean": 1776
+      },
+      "ws_round_trips_per_iter": 4,
+      "ws_by_type": {
+        "browser_navigate": 40,
+        "getUrl": 40,
+        "getTitle": 40,
+        "browser_snapshot": 40
+      },
+      "iterations_per_sec": 726.0924969232211,
+      "failure_rate": 0,
+      "server_rss_mb": 70
+    },
+    "sequence_10": {
+      "tool_calls_per_iter": 10,
+      "latency_ms": {
+        "n": 40,
+        "min": 7.95159999999305,
+        "median": 10.473099999995611,
+        "p95": 16.52980000000389,
+        "max": 19.15980000000127,
+        "mean": 11.719127500000468
+      },
+      "response_bytes": {
+        "n": 40,
+        "min": 16132,
+        "median": 16132,
+        "p95": 16132,
+        "max": 16132,
+        "mean": 16132
+      },
+      "ws_round_trips_per_iter": 36,
+      "ws_by_type": {
+        "browser_navigate": 40,
+        "getUrl": 360,
+        "getTitle": 360,
+        "browser_snapshot": 360,
+        "browser_click": 160,
+        "browser_type": 80,
+        "browser_hover": 40,
+        "browser_press_key": 40
+      },
+      "iterations_per_sec": 85.31917262585554,
+      "failure_rate": 0,
+      "server_rss_mb": 82
+    },
+    "repeated_100_clicks": {
+      "latency_ms": {
+        "n": 100,
+        "min": 0.934000000001106,
+        "median": 1.3138999999937369,
+        "p95": 2.0715999999956694,
+        "max": 8.173399999999674,
+        "mean": 1.4233559999994758
+      },
+      "first_10_median": 1.7178000000058091,
+      "last_10_median": 1.1868000000031316
+    }
+  },
+  "cold": {
+    "first_snapshot_ms": {
+      "n": 5,
+      "min": 5.53899999999885,
+      "median": 6.048200000000179,
+      "p95": 7.7029999999999745,
+      "max": 7.7029999999999745,
+      "mean": 6.542719999999827
+    }
+  },
+  "env": {
+    "node": "v24.14.0",
+    "os": "Windows_NT 10.0.26200",
+    "cpu": "AMD Ryzen 7 7840HS w/ Radeon 780M Graphics     ",
+    "cores": 16,
+    "totalMemGb": 15,
+    "date": "2026-10-13T11:24:07.529Z",
+    "notes": "Mock extension: extension-side time is SIMULATED (rttMs per message). Measures server+protocol overhead only, not Chrome."
+  }
+}

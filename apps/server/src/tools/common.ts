@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
 import {
@@ -8,76 +9,28 @@ import {
   WaitTool,
 } from "@repo/types/mcp/tool";
 
-import { captureAriaSnapshot } from "@/utils/aria-snapshot";
-
+import { perform } from "./actions";
+import { defineActionTool } from "./define";
 import type { Tool, ToolFactory } from "./tool";
 
-export const navigate: ToolFactory = (snapshot) => ({
-  schema: {
-    name: NavigateTool.shape.name.value,
-    description: NavigateTool.shape.description.value,
-    inputSchema: zodToJsonSchema(NavigateTool.shape.arguments),
-  },
-  handle: async (context, params) => {
-    const { url } = NavigateTool.shape.arguments.parse(params);
-    await context.sendSocketMessage("browser_navigate", { url });
-    if (snapshot) {
-      return captureAriaSnapshot(context);
-    }
-    return {
-      content: [
-        {
-          type: "text",
-          text: `Navigated to ${url}`,
-        },
-      ],
-    };
-  },
-});
+export const navigate: ToolFactory = (snapshot) =>
+  defineActionTool(
+    NavigateTool,
+    (a) => ({ action: "navigate", url: a.url }),
+    "snapshot-only",
+    snapshot,
+  );
 
-export const goBack: ToolFactory = (snapshot) => ({
-  schema: {
-    name: GoBackTool.shape.name.value,
-    description: GoBackTool.shape.description.value,
-    inputSchema: zodToJsonSchema(GoBackTool.shape.arguments),
-  },
-  handle: async (context) => {
-    await context.sendSocketMessage("browser_go_back", {});
-    if (snapshot) {
-      return captureAriaSnapshot(context);
-    }
-    return {
-      content: [
-        {
-          type: "text",
-          text: "Navigated back",
-        },
-      ],
-    };
-  },
-});
+export const goBack: ToolFactory = (snapshot) =>
+  defineActionTool(GoBackTool, () => ({ action: "go_back" }), "snapshot-only", snapshot);
 
-export const goForward: ToolFactory = (snapshot) => ({
-  schema: {
-    name: GoForwardTool.shape.name.value,
-    description: GoForwardTool.shape.description.value,
-    inputSchema: zodToJsonSchema(GoForwardTool.shape.arguments),
-  },
-  handle: async (context) => {
-    await context.sendSocketMessage("browser_go_forward", {});
-    if (snapshot) {
-      return captureAriaSnapshot(context);
-    }
-    return {
-      content: [
-        {
-          type: "text",
-          text: "Navigated forward",
-        },
-      ],
-    };
-  },
-});
+export const goForward: ToolFactory = (snapshot) =>
+  defineActionTool(
+    GoForwardTool,
+    () => ({ action: "go_forward" }),
+    "snapshot-only",
+    snapshot,
+  );
 
 export const wait: Tool = {
   schema: {
@@ -87,15 +40,8 @@ export const wait: Tool = {
   },
   handle: async (context, params) => {
     const { time } = WaitTool.shape.arguments.parse(params);
-    await context.sendSocketMessage("browser_wait", { time });
-    return {
-      content: [
-        {
-          type: "text",
-          text: `Waited for ${time} seconds`,
-        },
-      ],
-    };
+    const status = await perform(context, { action: "wait", time });
+    return { content: [{ type: "text", text: status }] };
   },
 };
 
@@ -107,14 +53,27 @@ export const pressKey: Tool = {
   },
   handle: async (context, params) => {
     const { key } = PressKeyTool.shape.arguments.parse(params);
-    await context.sendSocketMessage("browser_press_key", { key });
-    return {
-      content: [
-        {
-          type: "text",
-          text: `Pressed key ${key}`,
-        },
-      ],
-    };
+    const status = await perform(context, { action: "press_key", key });
+    return { content: [{ type: "text", text: status }] };
+  },
+};
+
+const WaitForArgs = z.object({
+  text: z.string().min(1).max(500).optional().describe("Wait until this text appears on the page."),
+  textGone: z.string().min(1).max(500).optional().describe("Wait until this text disappears."),
+  timeoutMs: z.number().int().min(100).max(60000).optional().describe("Give up after this long (default 10000)."),
+});
+
+export const waitFor: Tool = {
+  schema: {
+    name: "browser_wait_for",
+    description:
+      "Wait for text to appear or disappear instead of sleeping a fixed time. Fails with a timeout error naming the condition.",
+    inputSchema: zodToJsonSchema(WaitForArgs),
+  },
+  handle: async (context, params) => {
+    const a = WaitForArgs.parse(params ?? {});
+    const status = await perform(context, { action: "wait_for", ...a });
+    return { content: [{ type: "text", text: status }] };
   },
 };
