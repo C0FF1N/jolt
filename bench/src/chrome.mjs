@@ -7,15 +7,25 @@ import os from "node:os";
 import path from "node:path";
 import { WebSocket } from "ws";
 
+/** Where Playwright keeps its browsers, and the path of the Chromium executable inside one revision folder. */
+const PLAYWRIGHT = {
+  win32: { base: path.join(os.homedir(), "AppData/Local/ms-playwright"), exe: ["chrome-win64", "chrome.exe"] },
+  darwin: {
+    base: path.join(os.homedir(), "Library/Caches/ms-playwright"),
+    exe: ["chrome-mac", "Chromium.app", "Contents", "MacOS", "Chromium"],
+  },
+  linux: { base: path.join(os.homedir(), ".cache/ms-playwright"), exe: ["chrome-linux", "chrome"] },
+};
+
 export function findChromium() {
-  if (process.env.BROWSERMCP_BENCH_CHROME) return process.env.BROWSERMCP_BENCH_CHROME;
-  const base = path.join(os.homedir(), "AppData/Local/ms-playwright");
-  if (!existsSync(base)) return null;
-  const dirs = readdirSync(base)
+  if (process.env.JOLT_BENCH_CHROME) return process.env.JOLT_BENCH_CHROME;
+  const where = PLAYWRIGHT[process.platform];
+  if (!where || !existsSync(where.base)) return null;
+  const dirs = readdirSync(where.base)
     .filter((d) => /^chromium-\d+$/.test(d))
     .sort((a, b) => Number(b.split("-")[1]) - Number(a.split("-")[1]));
   for (const d of dirs) {
-    const exe = path.join(base, d, "chrome-win64", "chrome.exe");
+    const exe = path.join(where.base, d, ...where.exe);
     if (existsSync(exe)) return exe;
   }
   return null;
@@ -48,7 +58,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export async function launchChrome({ extensionDir, debugPort = 19222, headless = true }) {
   const exe = findChromium();
-  if (!exe) throw new Error("No Playwright Chromium found (set BROWSERMCP_BENCH_CHROME).");
+  if (!exe) throw new Error("No Playwright Chromium found (set JOLT_BENCH_CHROME).");
   const profile = mkdtempSync(path.join(os.tmpdir(), "bmcp-bench-"));
   const proc = spawn(
     exe,
@@ -103,7 +113,7 @@ export async function launchChrome({ extensionDir, debugPort = 19222, headless =
         const session = await attach(t.targetId);
         swSessions.push(session);
         const name = await evalIn(session, "chrome.runtime.getManifest().name");
-        if (name === "Browser MCP Turbo (unofficial)") {
+        if (String(name).startsWith("Jolt")) {
           extensionId = new URL(t.url).host;
           sw = session;
           break;
@@ -141,6 +151,11 @@ export async function launchChrome({ extensionDir, debugPort = 19222, headless =
     exe,
     version: version.Browser,
     extensionId,
+    // Low-level handles for UX/visual checks (real-ux.mjs).
+    cdp,
+    attach,
+    evalIn,
+    popup,
     async openPage(url) {
       const { targetId } = await cdp.send("Target.createTarget", { url });
       return targetId;
@@ -171,7 +186,10 @@ export async function launchChrome({ extensionDir, debugPort = 19222, headless =
     },
     async close() {
       try { ws.close(); } catch {}
-      try { execFileSync("taskkill", ["/PID", String(proc.pid), "/T", "/F"], { stdio: "ignore" }); } catch {}
+      try {
+        if (process.platform === "win32") execFileSync("taskkill", ["/PID", String(proc.pid), "/T", "/F"], { stdio: "ignore" });
+        else proc.kill("SIGKILL");
+      } catch {}
       await sleep(500);
       try { rmSync(profile, { recursive: true, force: true }); } catch {}
     },

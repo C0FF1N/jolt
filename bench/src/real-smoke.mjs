@@ -1,4 +1,4 @@
-// Real-browser functional check: new extension + turbo server + fixture pages.
+// Real-browser functional check: new extension + Jolt server + fixture pages.
 // Usage: node src/real-smoke.mjs [--target=turbo|baseline] [--headed]
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
@@ -36,7 +36,7 @@ console.log(`chromium ${chrome.version}, extension ${chrome.extensionId}, server
 const transport = new StdioClientTransport({
   command: process.execPath,
   args: [entry],
-  env: { ...process.env, BROWSERMCP_PORT: String(port) },
+  env: { ...process.env, JOLT_PORT: String(port) },
   stderr: "inherit",
 });
 const client = new Client({ name: "smoke", version: "0" });

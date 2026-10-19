@@ -73,7 +73,7 @@ async function withServer(nodes, fn) {
   const transport = new StdioClientTransport({
     command: process.execPath,
     args: [entry],
-    env: { ...process.env, BROWSERMCP_PORT: String(port) },
+    env: { ...process.env, JOLT_PORT: String(port) },
     stderr: "pipe",
   });
   const client = new Client({ name: "bench", version: "0" });

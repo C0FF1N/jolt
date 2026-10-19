@@ -1,4 +1,4 @@
-// Real-browser resilience checks (new extension + turbo server).
+// Real-browser resilience checks (new extension + Jolt server).
 // Usage: node src/real-resilience.mjs [--idle=75]   (idle seconds; default 75 > Chrome's ~30 s MV3 idle limit)
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
@@ -31,7 +31,7 @@ async function startClient() {
   const transport = new StdioClientTransport({
     command: process.execPath,
     args: [entry],
-    env: { ...process.env, BROWSERMCP_PORT: String(port) },
+    env: { ...process.env, JOLT_PORT: String(port) },
     stderr: "pipe",
   });
   const client = new Client({ name: "resilience", version: "0" });
@@ -44,7 +44,7 @@ async function startClient() {
 }
 
 const fixtures = await startFixtureServer();
-const chrome = await launchChrome({ extensionDir: process.env.BROWSERMCP_EXT_DIR ?? path.join(root, "apps/extension/dist") });
+const chrome = await launchChrome({ extensionDir: process.env.JOLT_EXT_DIR ?? path.join(root, "apps/extension/dist") });
 console.log(`chromium ${chrome.version}`);
 let srv = await startClient();
 
