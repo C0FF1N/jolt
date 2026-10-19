@@ -1,0 +1,22 @@
+name: Feature request
+description: Suggest an improvement
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: The problem or workflow first; the solution can come after.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like Jolt to do?
+    validations:
+      required: true
+  - type: textarea
+    id: permissions
+    attributes:
+      label: Does it need a new browser permission?
+      description: New permissions are a hard line (the Chrome Web Store rejects unjustified ones). If yes, explain why nothing existing can do it.

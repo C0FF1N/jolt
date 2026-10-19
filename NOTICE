@@ -1,11 +1,28 @@
-Browser MCP Turbo
-This work is derived from the Browser MCP server (https://github.com/browsermcp/mcp),
-Copyright Browser MCP, licensed under the Apache License, Version 2.0 (see LICENSE).
+Jolt
+Copyright 2026 C0FF1N
 
-Modified files are marked by the git history of this repository (base commit c29e923 is the
-unmodified upstream server). The packages under packages/ are reconstructions of runtime modules
-that the upstream server inlines in its published npm bundle (@browsermcp/mcp@0.1.3).
+Licensed under the Apache License, Version 2.0 (see LICENSE).
 
-apps/extension is an independent implementation written for this project. It does not contain
-code, icons, names or assets from the Browser MCP Chrome extension, and is not affiliated with
-or endorsed by Browser MCP.
+The server in apps/server is derived from the Browser MCP server (https://github.com/browsermcp/mcp),
+Copyright Browser MCP, also licensed under the Apache License, Version 2.0. That upstream work carries these
+notices, which are preserved here as required:
+
+    Portions Copyright (c) Microsoft Corporation.
+    Portions Copyright 2017 Google Inc.
+
+Changes made to the upstream server (Apache License section 4(b)): the WebSocket link, request handling, snapshot
+handling and tool set were reworked; new tools, discovery over HTTP, automatic port selection and reconnect handling were
+added; the packages under packages/ are reconstructions of runtime modules that the upstream server inlines in its
+published npm bundle (@browsermcp/mcp@0.1.3). Every modified file is identifiable from the git history of this
+repository (base commit c29e923 is the unmodified upstream server), and the published npm file (jolt-server.mjs)
+begins with a header saying it is derived from, and modified from, the upstream work.
+
+The baseline/ directory is the upstream server's source, kept only as the reference for benchmarks and compatibility
+tests. Its README and banner image (upstream branding) were removed; the source files are unmodified.
+
+apps/extension is an independent implementation written for this project. It does not contain code, icons, names or
+assets from the Browser MCP Chrome extension. Jolt is not affiliated with or endorsed by Browser MCP; "Browser MCP" is
+the name of that separate project, and no trademark rights in it are claimed or granted.
+
+Third-party packages bundled into the published server file, and their licenses, are listed in
+THIRD_PARTY_NOTICES.txt (generated at build time into apps/server/dist and shipped in the npm package).

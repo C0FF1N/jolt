@@ -1,55 +1,112 @@
-# Browser MCP Turbo
+<h1 align="center">Jolt</h1>
 
-A reliability and performance overhaul of the open-source [Browser MCP](https://github.com/browsermcp/mcp)
-server (Apache-2.0), plus an **independent, unofficial reimplementation** of the Chrome extension that server talks to.
-The original project is not affiliated with this work.
+<p align="center"><b>Let your AI use your real browser.</b><br>
+Claude Code, VS Code and other MCP clients drive the one tab you choose: visible, self-healing, and entirely on your machine.</p>
 
-What changed, in one paragraph: fewer WebSocket round trips per action, optional/bounded page snapshots, a
-one-call `browser_batch` tool, event-driven `browser_wait_for`, no hangs when the extension disconnects, a loopback-only
-socket, opt-in tracing, and a repeatable benchmark/test harness. Existing tools keep their names and schemas.
+<p align="center">
+  <a href="https://github.com/C0FF1N/jolt/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/C0FF1N/jolt/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue"></a>
+  <a href="https://www.npmjs.com/package/jolt-mcp"><img alt="npm" src="https://img.shields.io/npm/v/jolt-mcp"></a>
+</p>
 
-## Quick start
+<p align="center"><img src="store/assets/screenshot-1.jpg" alt="The Jolt popup, connected to Claude Code" width="760"></p>
 
-You need Node 22+ and Chrome. Pick **A** (from a release, no build) or **B** (from source).
+Jolt is a Chrome extension plus a small local [MCP](https://modelcontextprotocol.io) server. You press **Connect this
+tab**; from then on your AI client can read that tab, click, type, take screenshots and read the console, using the
+browser session you are already logged into. Nothing leaves your computer except what your own AI client sends.
 
-### A. From a release (only Node needed)
+## Why Jolt
 
-1. Download `browsermcp-turbo-extension.zip` and `browsermcp-turbo-server.mjs` from the
-   [latest release](../../releases/latest) and unzip the extension into a folder.
-2. Chrome → `chrome://extensions` → turn on **Developer mode** → **Load unpacked** → choose that folder.
-3. Register the server (use the absolute path to the `.mjs`):
-   ```bash
-   claude mcp add browsermcp-turbo -- node /absolute/path/to/browsermcp-turbo-server.mjs
-   ```
-   Other clients: see [docs/local-development.md](docs/local-development.md).
+- **Works with several clients at once.** Claude Code and VS Code can run side by side: each gets its own server
+  (ports 9470-9480) and the extension finds them all. No ports to type.
+- **Heals itself.** Restart a client and Jolt releases the tab (no stuck "debugging" banner), then reconnects on its own,
+  typically within about a second. It waits up to 15 minutes and never takes over a server another browser is using. A
+  tool call made during a blip waits a few seconds for the reconnect instead of failing.
+- **You can see what the AI does.** A cursor glides to every click and hover, with a ripple on click. Toggle it in the
+  popup; it adds nothing to the page's text or accessibility snapshot.
+- **Lean where it counts.** `browser_batch` runs several actions in one call, any action can skip the post-action
+  snapshot, page snapshots are bounded, `browser_wait_for` is event-driven, and a disconnect never hangs a tool call.
+  A single ordinary tool call performs about the same as upstream's (differences under ~10% are noise); the gains are in
+  the batch and no-snapshot modes. See the [benchmarks](docs/performance-benchmarks.md) and the
+  [audit of what was slow](docs/performance-audit.md).
+- **Private by design.** Loopback only, one tab at a time, an explicit click to connect, password values never in
+  snapshots, no account, no telemetry, no remote code. See [PRIVACY.md](PRIVACY.md) and
+  [docs/security.md](docs/security.md).
 
-### B. From source
+## Install
+
+You need Node 22+ and Chrome.
+
+**1. The extension.** Install **Jolt** from the Chrome Web Store (search "Jolt: AI browser control"), or load it
+unpacked: download `jolt-extension-<version>.zip` from the [latest release](../../releases/latest), unzip it, then
+`chrome://extensions` → **Developer mode** → **Load unpacked**.
+
+**2. The server.** Add it to your MCP client:
 
 ```bash
-git clone https://github.com/<you>/browsermcp-turbo.git
-cd browsermcp-turbo
-corepack enable
-pnpm install
-pnpm run quickstart     # builds everything and prints the exact extension path + MCP config for this checkout
+# Claude Code (all your projects)
+claude mcp add --scope user jolt -- npx -y jolt-mcp
+
+# Claude Code on native Windows needs the cmd /c wrapper for npx servers
+claude mcp add --scope user jolt -- cmd /c npx -y jolt-mcp
 ```
 
-Then follow the three printed steps (load `apps/extension/dist` in Chrome, register the server, connect a tab).
-Re-print them any time with `pnpm run config` (add `-- --port=9010` if the original Browser MCP already uses 9009).
+VS Code (`.vscode/mcp.json`, or your user-level `mcp.json`):
 
-### Use it
+```json
+{ "servers": { "jolt": { "type": "stdio", "command": "npx", "args": ["-y", "jolt-mcp"] } } }
+```
 
-Open the page you want automated → click the **Browser MCP Turbo** icon → **Connect this tab**. Chrome shows a
-"started debugging this browser" banner; that is expected. Then ask your AI client to use the `browsermcp-turbo` tools.
-Only connect tabs you are willing to expose; read [docs/security.md](docs/security.md).
+Any other client: command `npx`, arguments `-y jolt-mcp`. Jolt is tested with Claude Code; VS Code and other clients
+use their standard MCP stdio configuration, shown above.
 
-## Docs
+**3. Connect.** Open the page you want automated, click the Jolt icon, press **Connect this tab**. Chrome shows its
+"started debugging this browser" bar while the tab is linked; that is expected, and it disappears when the tab is
+released. Then ask your AI to use the Jolt tools.
 
-- Build, load the extension, configure clients: [docs/local-development.md](docs/local-development.md)
-- What was slow and what was broken: [docs/performance-audit.md](docs/performance-audit.md)
-- How it works now: [docs/performance-architecture.md](docs/performance-architecture.md)
-- Measured results and their limits: [docs/performance-benchmarks.md](docs/performance-benchmarks.md)
-- Tool/protocol compatibility: [docs/compatibility.md](docs/compatibility.md)
-- Security model and known limitations: [docs/security.md](docs/security.md)
-- Progress checkpoint: [docs/STATUS.md](docs/STATUS.md)
+Only connect tabs you are willing to expose to your AI client.
 
-Attribution: see [NOTICE](NOTICE). Licence: [Apache-2.0](LICENSE).
+## From source
+
+```bash
+git clone https://github.com/C0FF1N/jolt.git
+cd jolt
+corepack enable
+pnpm install
+pnpm run quickstart   # build everything, then register the server with Claude Code and VS Code
+```
+
+`pnpm run setup` does the registration alone (`-- --dry-run` previews; `-- --claude` / `-- --vscode` for one client).
+It never overwrites an existing entry unless you pass `--force`, and it backs up VS Code's `mcp.json` first. Then load
+`apps/extension/dist` in Chrome (the script prints the path). More: [docs/local-development.md](docs/local-development.md).
+
+## How it works
+
+```text
+MCP client ──stdio──> jolt-mcp server ──ws://127.0.0.1:<port>──> Jolt extension ──chrome.debugger──> ONE tab
+                           ^                                          │
+                           └──────── http://127.0.0.1:<port>/info ────┘   (discovery, ports 9470-9480)
+```
+
+Details, measurements and design decisions are in [docs/](docs/):
+
+- [Local development](docs/local-development.md): build, load the extension, configure clients, settings
+- [Performance architecture](docs/performance-architecture.md), [audit](docs/performance-audit.md),
+  [benchmarks](docs/performance-benchmarks.md)
+- [Compatibility with Browser MCP](docs/compatibility.md): tool and protocol compatibility
+- [Security model and known limitations](docs/security.md)
+- [Releasing](docs/releasing.md)
+
+## Contributing
+
+Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first; report vulnerabilities privately as
+described in [SECURITY.md](SECURITY.md). Everyone taking part is expected to follow the
+[Code of Conduct](CODE_OF_CONDUCT.md).
+
+## Credits and licence
+
+Created by **C0FF1N**. Licensed under [Apache-2.0](LICENSE).
+
+Jolt's server began as a fork of the [Browser MCP](https://github.com/browsermcp/mcp) server (Apache-2.0) and keeps
+its tool names and schemas where possible; the Chrome extension is an independent implementation. Jolt is not
+affiliated with or endorsed by the Browser MCP project, Anthropic or Microsoft. See [NOTICE](NOTICE) for attribution.

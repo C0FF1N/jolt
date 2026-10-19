@@ -1,0 +1,56 @@
+name: Bug report
+description: Something in Jolt does not work as it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. **Security problems: do not file them here** (see SECURITY.md).
+        Please check the [docs](https://github.com/C0FF1N/jolt/tree/main/docs) and existing issues first.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what you saw instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open ...
+        2. Click the Jolt icon, press "Connect this tab"
+        3. Ask the AI to ...
+    validations:
+      required: true
+  - type: dropdown
+    id: client
+    attributes:
+      label: MCP client
+      options: [Claude Code, VS Code (Copilot agent mode), Cursor, Windsurf, Claude Desktop, Other]
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Jolt extension (shown in the popup), `jolt-mcp` (`npx jolt-mcp --version`), Chrome, Node.
+      placeholder: "extension 1.0.0, jolt-mcp 1.0.0, Chrome 140, Node 22.12"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [Windows, macOS, Linux]
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: |
+        Optional but very helpful. Start the server with `JOLT_TRACE=1` (timings and sizes only, never page content) and
+        paste the relevant lines. Remove anything private.
+      render: shell

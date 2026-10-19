@@ -8,7 +8,7 @@ are still hypotheses say so. Numbers live in [performance-benchmarks.md](perform
 
 | Fact | Evidence |
 |---|---|
-| `mcp-main/` is byte-identical to `github.com/browsermcp/mcp` (6 commits, Apache-2.0, last push 2025-04-24). | `gh api repos/browsermcp/mcp/git/trees/main` lists the same 22 files. |
+| `baseline/` is the upstream server source, byte for byte (compared with `github.com/browsermcp/mcp`: 6 commits, Apache-2.0, last push 2025-04-24). | `gh api repos/browsermcp/mcp/git/trees/main` lists the same 22 files. |
 | It is **only the MCP server** (~640 lines of TypeScript). There is no extension source, no tests, no lint config, no lockfile, no docs. | File listing. |
 | It cannot build alone: it imports `@repo/config`, `@repo/types`, `@repo/messaging`, `@repo/utils`, `@r2r/messaging` (all `workspace:*` in an unpublished monorepo). | `package.json`; the README says so. |
 | Those packages are recoverable: the published `@browsermcp/mcp@0.1.3` bundle inlines every runtime module with source-path comments. | `dist/index.js` markers `../../packages/config/src/app.config.ts` etc. |
