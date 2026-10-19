@@ -3,3 +3,5 @@ dist
 .turbo
 coverage
 bench/results/*.tmp
+bench/results/ux/
+release/

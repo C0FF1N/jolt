@@ -1,15 +1,26 @@
 {
-  "name": "browsermcp-turbo",
+  "name": "jolt",
+  "version": "1.0.0",
   "private": true,
-  "description": "Performance and reliability overhaul of Browser MCP (server + reimplemented extension)",
+  "description": "Jolt: visible, self-healing, local AI control of one browser tab for MCP clients (server + Chrome extension). A fork of the Browser MCP server with its own extension.",
+  "author": "C0FF1N",
   "license": "Apache-2.0",
+  "homepage": "https://github.com/C0FF1N/jolt#readme",
+  "bugs": "https://github.com/C0FF1N/jolt/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/C0FF1N/jolt.git"
+  },
   "packageManager": "pnpm@11.17.0",
   "scripts": {
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "test": "vitest run",
-    "quickstart": "pnpm -r build && node scripts/print-config.mjs",
-    "config": "node scripts/print-config.mjs"
+    "quickstart": "pnpm -r build && node scripts/setup.mjs",
+    "setup": "node scripts/setup.mjs",
+    "config": "node scripts/print-config.mjs",
+    "icons": "node scripts/make-icons.mjs",
+    "package:extension": "node scripts/package-extension.mjs"
   },
   "devDependencies": {
     "typescript": "^5.6.2",

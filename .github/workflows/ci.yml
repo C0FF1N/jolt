@@ -8,13 +8,36 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
+    name: test (${{ matrix.os }}, node ${{ matrix.node }})
     strategy:
       fail-fast: false
       matrix:
+        # engines says Node >= 22, so test the oldest supported and the newest.
         os: [ubuntu-latest, windows-latest]
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r build
+      - run: pnpm -r typecheck
+      # Unit, tool-contract (vs the unmodified upstream baseline), protocol e2e and packaging tests.
+      # The real-Chromium scripts in bench/ are not run here (they need a local Chromium).
+      - run: pnpm test
+
+  package:
+    # Everything that ships, checked the way the stores will check it.
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -23,7 +46,16 @@ jobs:
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: pnpm -r build
-      - run: pnpm -r typecheck
-      # Unit, tool-contract (vs the unmodified upstream baseline) and protocol e2e tests.
-      # The real-Chromium scripts in bench/ are not run here (they need a local Chromium).
-      - run: pnpm test
+      - name: Versions agree everywhere
+        run: node scripts/check-versions.mjs
+      - name: Markdown links resolve
+        run: node scripts/check-links.mjs
+      - name: Extension passes the Chrome Web Store rules and zips
+        run: node scripts/package-extension.mjs --no-build
+      - name: npm package contents
+        run: cd apps/server && npm pack --dry-run
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jolt-extension
+          path: release/jolt-extension-*.zip
+          if-no-files-found: error

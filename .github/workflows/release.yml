@@ -1,33 +1,61 @@
 name: Release
 
-# Push a tag like v0.1.0 to publish a ready-to-use build: the extension zip and a single-file server.
+# Push a tag like v1.0.0 (it must match the version in package.json / manifest.json) to:
+#   - build and test everything,
+#   - attach the Chrome extension zip (the file you upload to the Chrome Web Store), the single-file server and
+#     its third-party license notices to a GitHub release,
+#   - publish the `jolt-mcp` npm package with provenance (only when the NPM_TOKEN secret is set).
+# Safe to re-run: an existing release is updated and an already-published npm version is skipped.
 on:
   push:
     tags: ["v*"]
 
 permissions:
   contents: write
+  id-token: write # npm provenance
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+          registry-url: https://registry.npmjs.org
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
+      - name: Tag matches the versions in the repo
+        run: node scripts/check-versions.mjs "${GITHUB_REF_NAME}"
       - run: pnpm -r build
       - run: pnpm test
-      - name: Package
+      - name: Package the extension (store rules are enforced here)
+        run: node scripts/package-extension.mjs --no-build
+      - name: Collect release files
         run: |
-          mkdir -p release
-          (cd apps/extension/dist && zip -r ../../../release/browsermcp-turbo-extension.zip .)
-          cp apps/server/dist/browsermcp-turbo.mjs release/browsermcp-turbo-server.mjs
-      - name: Publish release
+          cp apps/server/dist/jolt-server.mjs release/jolt-server.mjs
+          cp apps/server/dist/THIRD_PARTY_NOTICES.txt release/THIRD_PARTY_NOTICES.txt
+      - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" release/browsermcp-turbo-extension.zip release/browsermcp-turbo-server.mjs \
-            --title "Browser MCP Turbo ${GITHUB_REF_NAME}" --generate-notes
+          files=(release/jolt-extension-*.zip release/jolt-extension-*.zip.sha256 release/jolt-server.mjs release/THIRD_PARTY_NOTICES.txt)
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release upload "${GITHUB_REF_NAME}" "${files[@]}" --clobber
+          else
+            gh release create "${GITHUB_REF_NAME}" "${files[@]}" --title "Jolt ${GITHUB_REF_NAME}" --generate-notes
+          fi
+      - name: Publish to npm
+        if: env.NPM_TOKEN != ''
+        working-directory: apps/server
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if npm view "jolt-mcp@${version}" version >/dev/null 2>&1; then
+            echo "jolt-mcp@${version} is already on npm; skipping publish"
+          else
+            npm publish --provenance --access public
+          fi
