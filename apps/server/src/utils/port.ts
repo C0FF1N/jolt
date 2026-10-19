@@ -31,7 +31,7 @@ export function listenerPids(port: number): number[] {
   return out.split(/\s+/).filter(Boolean).map(Number).filter((p) => p > 0);
 }
 
-/** Opt-in (BROWSERMCP_KILL_PORT_HOLDER=1): terminate whatever is listening on the port. No shell involved. */
+/** Opt-in (JOLT_KILL_PORT_HOLDER=1): terminate whatever is listening on the port. No shell involved. */
 export function killProcessOnPort(port: number) {
   try {
     for (const pid of listenerPids(port)) {

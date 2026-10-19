@@ -1,6 +1,6 @@
 // Verbatim runtime behavior of the published @browsermcp/mcp@0.1.3 bundle
 // (packages-r2r/messaging/src/ws/sender.ts). Kept unmodified so `baseline`
-// measures the original protocol code. The turbo server replaces this module.
+// measures the original protocol code. The Jolt server replaces this module.
 import { WebSocket } from "ws";
 
 import type {

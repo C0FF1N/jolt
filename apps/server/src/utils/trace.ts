@@ -1,13 +1,15 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { appendFileSync } from "node:fs";
 
+import { env } from "@repo/config/env";
+
 /**
- * Opt-in diagnostics. BROWSERMCP_TRACE=1 emits one JSON line per event to
- * stderr (or BROWSERMCP_TRACE_FILE). Events carry sizes and timings only,
+ * Opt-in diagnostics. JOLT_TRACE=1 emits one JSON line per event to
+ * stderr (or JOLT_TRACE_FILE). Events carry sizes and timings only,
  * never page content, form values, URL query strings or credentials.
  */
-export const traceEnabled = process.env.BROWSERMCP_TRACE === "1";
-const traceFile = process.env.BROWSERMCP_TRACE_FILE;
+export const traceEnabled = env("TRACE") === "1";
+const traceFile = env("TRACE_FILE");
 
 const als = new AsyncLocalStorage<{ traceId: string }>();
 let seq = 0;

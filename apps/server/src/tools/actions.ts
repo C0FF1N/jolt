@@ -111,12 +111,12 @@ export async function perform(
           "wait_for",
         );
       }
-      if (!context.link.has("waitFor")) {
+      if (!(await context.requireLink()).has("waitFor")) {
         throw new BrowserMcpError(
           "UNSUPPORTED",
           "The connected extension does not support condition waits.",
           "wait_for",
-          "Use browser_wait with a fixed time, or connect with the Browser MCP Turbo extension.",
+          "Use browser_wait with a fixed time, or connect with the Jolt extension.",
         );
       }
       const timeoutMs = a.timeoutMs ?? WAIT_FOR_DEFAULT_MS;

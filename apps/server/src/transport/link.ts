@@ -26,6 +26,8 @@ export type LinkOptions = {
   defaultTimeoutMs?: number;
   /** Frames larger than this are dropped (protects the server's memory). */
   maxFrameBytes?: number;
+  /** Called when the extension announces itself (new-protocol extensions only). */
+  onHello?: () => void;
 };
 
 type Pending = {
@@ -49,9 +51,12 @@ export class ExtensionLink {
   private readonly maxPending: number;
   private readonly defaultTimeoutMs: number;
   private readonly maxFrameBytes: number;
+  private readonly onHello: (() => void) | undefined;
   private closed = false;
   capabilities: ReadonlySet<string> = new Set();
   protocolVersion = 0;
+  /** The extension said "bye": the user disconnected on purpose, so waiting for a reconnect is pointless. */
+  saidGoodbye = false;
 
   constructor(
     private readonly ws: WebSocket,
@@ -60,6 +65,7 @@ export class ExtensionLink {
     this.maxPending = options.maxPending ?? 64;
     this.defaultTimeoutMs = options.defaultTimeoutMs ?? 30_000;
     this.maxFrameBytes = options.maxFrameBytes ?? 64 * 1024 * 1024;
+    this.onHello = options.onHello;
     ws.on("message", this.onMessage);
     ws.on("close", this.onClose);
     ws.on("error", this.onError);
@@ -130,6 +136,12 @@ export class ExtensionLink {
     });
   }
 
+  /** Fire-and-forget frame with no response (welcome, pong). Dropped if the socket is not open. */
+  notify(type: string, payload?: unknown): void {
+    if (!this.isOpen) return;
+    this.ws.send(JSON.stringify({ type, payload }), () => undefined);
+  }
+
   /** Reject everything in flight and detach listeners. Idempotent. */
   close(reason: BrowserMcpError): void {
     if (this.closed) return;
@@ -171,12 +183,22 @@ export class ExtensionLink {
       trace("ws.drop_invalid_json");
       return;
     }
-    if ((json as { type?: unknown } | null)?.type === "ping") return; // extension keepalive
+    const frame = json as { type?: unknown; t?: unknown } | null;
+    if (frame?.type === "ping") {
+      // Keepalive; the echo lets the extension measure round-trip time and notice a dead server.
+      this.notify("pong", { t: typeof frame.t === "number" ? frame.t : undefined });
+      return;
+    }
+    if (frame?.type === "bye") {
+      this.saidGoodbye = true;
+      return;
+    }
     const hello = HelloFrame.safeParse(json);
     if (hello.success) {
       this.protocolVersion = hello.data.payload.protocolVersion;
       this.capabilities = new Set(hello.data.payload.capabilities);
       trace("ws.hello", { protocolVersion: this.protocolVersion });
+      this.onHello?.();
       return;
     }
     const res = ResponseFrame.safeParse(json);

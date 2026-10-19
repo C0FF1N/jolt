@@ -1,32 +1,55 @@
-<a href="https://browsermcp.io">
-  <img src="./.github/images/banner.png" alt="Browser MCP banner">
-</a>
+# jolt-mcp
 
-<h3 align="center">Browser MCP</h3>
+The MCP server for **[Jolt](https://github.com/C0FF1N/jolt)**: it lets Claude Code, VS Code (Copilot agent mode),
+Cursor, Windsurf and other [MCP](https://modelcontextprotocol.io) clients drive **one browser tab you choose**, quickly
+and visibly, through the Jolt Chrome extension. Everything stays on your computer (loopback only).
 
-<p align="center">
-  Automate your browser with AI.
-  <br />
-  <a href="https://browsermcp.io"><strong>Website</strong></a> 
-  •
-  <a href="https://docs.browsermcp.io"><strong>Docs</strong></a>
-</p>
+## Use it
 
-## About
+1. Install the **Jolt** extension from the Chrome Web Store (or load it unpacked from the
+   [releases](https://github.com/C0FF1N/jolt/releases)).
+2. Register this server with your MCP client:
 
-Browser MCP is an MCP server + Chrome extension that allows you to automate your browser using AI applications like VS Code, Claude, Cursor, and Windsurf.
+   ```bash
+   # Claude Code (all your projects)
+   claude mcp add --scope user jolt -- npx -y jolt-mcp
 
-## Features
+   # Claude Code on native Windows needs the cmd /c wrapper for npx servers
+   claude mcp add --scope user jolt -- cmd /c npx -y jolt-mcp
+   ```
 
-- ⚡ Fast: Automation happens locally on your machine, resulting in better performance without network latency.
-- 🔒 Private: Since automation happens locally, your browser activity stays on your device and isn't sent to remote servers.
-- 👤 Logged In: Uses your existing browser profile, keeping you logged into all your services.
-- 🥷🏼 Stealth: Avoids basic bot detection and CAPTCHAs by using your real browser fingerprint.
+   VS Code (`.vscode/mcp.json` or your user `mcp.json`):
 
-## Contributing
+   ```json
+   { "servers": { "jolt": { "type": "stdio", "command": "npx", "args": ["-y", "jolt-mcp"] } } }
+   ```
 
-This repo contains all the core MCP code for Browser MCP, but currently cannot yet be built on its own due to dependencies on utils and types from the monorepo where it's developed.
+   Any other client: command `npx`, args `-y jolt-mcp`.
+3. Open the page you want automated, click the Jolt icon and press **Connect this tab**.
 
-## Credits
+Requires Node 22 or newer. Several clients can run at once; each server takes the first free port in 9470-9480 and the
+extension finds them all.
 
-Browser MCP was adapted from the [Playwright MCP server](https://github.com/microsoft/playwright-mcp) in order to automate the user's browser rather than creating new browser instances. This allows using the user's existing browser profile to use logged-in sessions and avoid bot detection mechanisms that commonly block automated browser use.
+## Settings (environment variables)
+
+| Variable | Effect |
+|---|---|
+| `JOLT_PORT` | Pin the server to exactly this port (no fallback). |
+| `JOLT_BASE_PORT` | Start the 11-port range here instead of 9470. |
+| `JOLT_CONNECT_GRACE_MS` | How long a tool call waits for the extension to reconnect (default 4000, `0` = fail at once). |
+| `JOLT_MAX_SNAPSHOT_CHARS` | Cap on snapshot size (default 200000, `0` = unlimited). |
+| `JOLT_TRACE=1` | Timing/size trace on stderr (never page content). |
+
+The older `BROWSERMCP_*` names still work.
+
+## Tools
+
+`browser_navigate`, `browser_go_back`, `browser_go_forward`, `browser_snapshot`, `browser_click`, `browser_hover`,
+`browser_type`, `browser_select_option`, `browser_press_key`, `browser_wait`, `browser_wait_for`,
+`browser_get_console_logs`, `browser_screenshot`, and `browser_batch` (several actions in one call).
+
+## More
+
+Documentation, security model and source: <https://github.com/C0FF1N/jolt>.
+Licensed under Apache-2.0. Derived from the [Browser MCP](https://github.com/browsermcp/mcp) server; Jolt is not
+affiliated with or endorsed by that project (see `NOTICE`).

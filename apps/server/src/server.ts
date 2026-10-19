@@ -13,6 +13,8 @@ import type { Tool, ToolResult } from "@/tools/tool";
 import { now, trace, withTrace } from "@/utils/trace";
 import { createWebSocketServer } from "@/ws";
 
+const PROTOCOL_VERSION = 2;
+
 type Options = {
   name: string;
   version: string;
@@ -47,15 +49,37 @@ export async function createServerWithTools(options: Options): Promise<Server> {
     },
   );
 
-  const wss = await createWebSocketServer();
+  /** Who we are, for the extension popup ("Connected to Claude Code · :9470"); also served at /info. */
+  let port = 0;
+  const startedAt = Date.now();
+  const info = () => ({
+    name,
+    version,
+    protocolVersion: PROTOCOL_VERSION,
+    pid: process.pid,
+    port,
+    startedAt,
+    client: server.getClientVersion()?.name ?? null,
+    connected: context.hasWs(),
+  });
+
+  const bridge = await createWebSocketServer(undefined, { info });
+  const { wss } = bridge;
+  port = bridge.port;
+  console.error(`[${name}] ready for the browser extension on ws://127.0.0.1:${port}`);
   wss.on("error", (error) => {
     console.error(`WebSocket server error: ${error.message}`);
   });
+
   wss.on("connection", (websocket) => {
     websocket.on("error", () => undefined); // per-socket errors are handled by ExtensionLink
     // A new connection replaces (and rejects pending work on) the old one.
-    context.attach(websocket);
+    context.attach(websocket, {
+      onHello: () => context.notifyExtension("welcome", info()),
+    });
   });
+  // The MCP handshake can finish after the extension connected; refresh the client name it shows.
+  server.oninitialized = () => context.notifyExtension("welcome", info());
 
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     return { tools: tools.map((tool) => tool.schema) };
@@ -111,11 +135,10 @@ export async function createServerWithTools(options: Options): Promise<Server> {
   const closeProtocol = server.close.bind(server);
   server.close = async () => {
     await closeProtocol();
-    // Close the extension link first (it terminates the socket); wss.close() waits for
+    // Close the extension link first (it terminates the socket); closing the bridge waits for
     // every client socket to end, so doing it first stalls shutdown while a tab is connected.
     await context.close();
-    for (const client of wss.clients) client.terminate();
-    await new Promise<void>((resolve) => wss.close(() => resolve()));
+    await bridge.close();
   };
 
   return server;

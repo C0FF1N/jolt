@@ -1,3 +1,5 @@
+import { env } from "@repo/config/env";
+
 import type { Context } from "@/context";
 import type { ToolResult } from "@/tools/tool";
 import { boundText, defaultMaxSnapshotChars } from "@/utils/bound";
@@ -18,10 +20,10 @@ type Bundle = { url: string; title: string; snapshot: string };
  * reads are issued concurrently instead of one after another.
  */
 async function readPage(context: Context): Promise<Bundle> {
-  if (context.link.has("snapshotBundle")) {
+  if ((await context.requireLink()).has("snapshotBundle")) {
     return (await context.sendCustom("browser_snapshot_bundle", {})) as Bundle;
   }
-  if (process.env.BROWSERMCP_SEQUENTIAL_SNAPSHOT === "1") {
+  if (env("SEQUENTIAL_SNAPSHOT") === "1") {
     // Safety valve: upstream behaviour, one read after another.
     const url = await context.sendSocketMessage("getUrl", undefined);
     const title = await context.sendSocketMessage("getTitle", undefined);

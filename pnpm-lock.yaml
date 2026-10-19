@@ -28,23 +28,10 @@ importers:
         version: 5.9.3
 
   apps/server:
-    dependencies:
+    devDependencies:
       '@modelcontextprotocol/sdk':
         specifier: ^1.8.0
         version: 1.32.1(zod@3.25.76)
-      commander:
-        specifier: ^13.1.0
-        version: 13.1.0
-      ws:
-        specifier: ^8.18.1
-        version: 8.22.0
-      zod:
-        specifier: ^3.24.2
-        version: 3.25.76
-      zod-to-json-schema:
-        specifier: ^3.24.3
-        version: 3.25.2(zod@3.25.76)
-    devDependencies:
       '@r2r/messaging':
         specifier: workspace:*
         version: link:../../packages/r2r-messaging
@@ -63,6 +50,9 @@ importers:
       '@types/ws':
         specifier: ^8.18.0
         version: 8.18.2
+      commander:
+        specifier: ^13.1.0
+        version: 13.1.0
       esbuild:
         specifier: ^0.25.0
         version: 0.25.12
@@ -75,6 +65,15 @@ importers:
       typescript:
         specifier: ^5.6.2
         version: 5.9.3
+      ws:
+        specifier: ^8.18.1
+        version: 8.22.0
+      zod:
+        specifier: ^3.24.2
+        version: 3.25.76
+      zod-to-json-schema:
+        specifier: ^3.24.3
+        version: 3.25.2(zod@3.25.76)
 
   baseline:
     dependencies:

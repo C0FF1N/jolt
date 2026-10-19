@@ -1,3 +1,5 @@
+import { env } from "@repo/config/env";
+
 export type Bounded = {
   text: string;
   truncated: boolean;
@@ -38,7 +40,7 @@ export function boundText(
 }
 
 export function defaultMaxSnapshotChars(): number {
-  const raw = process.env.BROWSERMCP_MAX_SNAPSHOT_CHARS;
+  const raw = env("MAX_SNAPSHOT_CHARS");
   if (raw === undefined || raw === "") return 200_000;
   const n = Number(raw);
   return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 200_000;

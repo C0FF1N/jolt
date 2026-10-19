@@ -1,4 +1,4 @@
-// End-to-end over the real wire: built turbo server (MCP stdio) <-> WebSocket <->
+// End-to-end over the real wire: built Jolt server (MCP stdio) <-> WebSocket <->
 // the REAL extension handlers driving a stateful fake page (no Chrome needed).
 import { existsSync } from "node:fs";
 import os from "node:os";
@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { WebSocket } from "ws";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AXNode } from "../../apps/extension/src/aria";
 import { CAPABILITIES, type Cdp, createHandlers } from "../../apps/extension/src/handlers";
@@ -87,8 +87,13 @@ function connectExtension(
     ws.once("error", reject);
     ws.once("unexpected-response", (_req, res) => reject(new Error(`HTTP ${res.statusCode}`)));
   });
+  const frames: { type: string; payload?: any }[] = []; // server -> extension notifications (no id)
   ws.on("message", async (raw) => {
     const msg = JSON.parse(raw.toString());
+    if (typeof msg.id !== "string") {
+      frames.push(msg);
+      return;
+    }
     const respond = (body: object) =>
       ws.readyState === ws.OPEN &&
       ws.send(JSON.stringify({ type: "messageResponse", payload: { requestId: msg.id, ...body } }));
@@ -98,19 +103,25 @@ function connectExtension(
       respond({ error: (e as Error).message });
     }
   });
-  return { ws, page, opened };
+  return { ws, page, opened, frames };
 }
 
 let client: Client;
 let port: number;
 let portSeq = 19400;
 
-async function startServer() {
+/** `grace` = JOLT_CONNECT_GRACE_MS; 0 keeps the "no tab connected" tests instant. */
+async function startServer(grace = "0", extraEnv: Record<string, string> = {}) {
   port = portSeq++;
   const transport = new StdioClientTransport({
     command: process.execPath,
     args: [entry],
-    env: { ...process.env, BROWSERMCP_PORT: String(port) } as Record<string, string>,
+    env: {
+      ...process.env,
+      JOLT_PORT: String(port),
+      JOLT_CONNECT_GRACE_MS: grace,
+      ...extraEnv,
+    } as Record<string, string>,
     stderr: "pipe",
   });
   client = new Client({ name: "e2e", version: "0" });
@@ -123,7 +134,7 @@ const call = (name: string, args: object = {}) =>
 const text = (r: any) => (r.content as { text: string }[]).map((c) => c.text).join("\n");
 
 describe.skipIf(!built)("server <-> extension protocol (fake page)", () => {
-  beforeEach(startServer);
+  beforeEach(() => startServer());
   afterEach(async () => {
     await client.close().catch(() => {});
   });
@@ -310,6 +321,128 @@ describe.skipIf(!built)("server <-> extension protocol (fake page)", () => {
     const r = await call("browser_snapshot");
     expect(r.isError).toBeFalsy();
     ext.ws.close();
+  });
+
+  it("answers a keepalive ping with a pong that echoes the timestamp", async () => {
+    const ext = connectExtension(port);
+    await ext.opened;
+    ext.ws.send(JSON.stringify({ type: "ping", t: 1234 }));
+    await vi.waitFor(() => expect(ext.frames.find((f) => f.type === "pong")?.payload).toEqual({ t: 1234 }));
+    ext.ws.close();
+  });
+
+  it("welcomes a new-protocol extension with the MCP client's name, but a legacy one gets nothing", async () => {
+    const ext = connectExtension(port);
+    await ext.opened;
+    await vi.waitFor(() => expect(ext.frames.some((f) => f.type === "welcome")).toBe(true));
+    expect(ext.frames.find((f) => f.type === "welcome")!.payload).toMatchObject({
+      name: "Jolt",
+      client: "e2e",
+      port,
+      protocolVersion: 2,
+    });
+    const legacy = connectExtension(port, { caps: [] });
+    await legacy.opened;
+    await new Promise((r) => setTimeout(r, 300));
+    expect(legacy.frames).toEqual([]);
+    legacy.ws.close();
+  });
+
+  it("answers GET /info with server info WITHOUT touching the live extension link", async () => {
+    const ext = connectExtension(port);
+    await ext.opened;
+    const res = await fetch(`http://127.0.0.1:${port}/info`);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({
+      name: "Jolt",
+      client: "e2e",
+      port,
+      connected: true,
+      protocolVersion: 2,
+    });
+    const r = await call("browser_snapshot");
+    expect(r.isError).toBeFalsy(); // the original connection is still the live one
+    ext.ws.close();
+  });
+
+  it("reports connected:false until an extension links up", async () => {
+    const before = await (await fetch(`http://127.0.0.1:${port}/info`)).json();
+    expect(before.connected).toBe(false);
+  });
+});
+
+describe.skipIf(!built)("connection grace", () => {
+  afterEach(async () => {
+    await client.close().catch(() => {});
+  });
+
+  it("waits for a reconnecting extension instead of failing the call", async () => {
+    await startServer("3000");
+    const pending = call("browser_snapshot");
+    await new Promise((r) => setTimeout(r, 500));
+    const ext = connectExtension(port);
+    await ext.opened;
+    const r = await pending;
+    expect(r.isError).toBeFalsy();
+    expect(text(r)).toContain('textbox "Email"');
+    ext.ws.close();
+  });
+
+  it("still gives up with NO_CONNECTION after the grace period", async () => {
+    await startServer("400");
+    const started = Date.now();
+    const r = await call("browser_snapshot");
+    expect(text(r)).toMatch(/NO_CONNECTION/);
+    expect(Date.now() - started).toBeGreaterThanOrEqual(350);
+  });
+
+  it("does not wait when the extension disconnected on purpose (bye)", async () => {
+    await startServer("5000");
+    const ext = connectExtension(port);
+    await ext.opened;
+    ext.ws.send(JSON.stringify({ type: "bye" }));
+    ext.ws.close();
+    await new Promise((r) => setTimeout(r, 200));
+    const started = Date.now();
+    const r = await call("browser_snapshot");
+    expect(text(r)).toMatch(/NO_CONNECTION/);
+    expect(Date.now() - started).toBeLessThan(2000);
+  });
+});
+
+describe.skipIf(!built)("automatic port selection", () => {
+  it("two servers started without JOLT_PORT land on different ports and both answer a probe", async () => {
+    const base = 19600;
+    // Unpinned: scan from `base`. JOLT_PORT must be absent, so build a clean env.
+    const env = { ...process.env } as Record<string, string>;
+    delete env.JOLT_PORT;
+    const mk = () => {
+      const transport = new StdioClientTransport({
+        command: process.execPath,
+        args: [entry],
+        env: { ...env, JOLT_BASE_PORT: String(base) },
+        stderr: "pipe",
+      });
+      const c = new Client({ name: "multi", version: "0" });
+      return { c, transport, connect: () => c.connect(transport) };
+    };
+    const a = mk();
+    const b = mk();
+    await a.connect();
+    await b.connect();
+    await new Promise((r) => setTimeout(r, 300));
+    const ports: number[] = [];
+    for (const p of [base, base + 1, base + 2]) {
+      try {
+        const info = await (await fetch(`http://127.0.0.1:${p}/info`, { signal: AbortSignal.timeout(800) })).json();
+        ports.push(info.port);
+      } catch {
+        /* nothing listening on this port */
+      }
+    }
+    expect(ports).toEqual([base, base + 1]);
+    await a.c.close().catch(() => {});
+    await b.c.close().catch(() => {});
   });
 });
 

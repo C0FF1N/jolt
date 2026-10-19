@@ -18,7 +18,7 @@ async function listTools(entry: string, port: number) {
   const transport = new StdioClientTransport({
     command: process.execPath,
     args: [entry],
-    env: { ...process.env, BROWSERMCP_PORT: String(port) } as Record<string, string>,
+    env: { ...process.env, JOLT_PORT: String(port) } as Record<string, string>,
     stderr: "pipe",
   });
   const client = new Client({ name: "compat", version: "0" });

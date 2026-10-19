@@ -160,6 +160,33 @@ describe("ExtensionLink", () => {
     expect(link.protocolVersion).toBe(2);
   });
 
+  it("replies to a ping with a pong echoing the timestamp", async () => {
+    const got = new Promise<any>((r) => clientSide.once("message", (d) => r(JSON.parse(d.toString()))));
+    clientSide.send(JSON.stringify({ type: "ping", t: 42 }));
+    expect(await got).toEqual({ type: "pong", payload: { t: 42 } });
+  });
+
+  it("calls onHello when the extension announces itself", async () => {
+    let hellos = 0;
+    // A second link on the same socket (closing the first would terminate it); afterEach closes this one.
+    link = new ExtensionLink(serverSide, { onHello: () => hellos++ });
+    clientSide.send(JSON.stringify({ type: "hello", payload: { protocolVersion: 2, capabilities: [] } }));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(hellos).toBe(1);
+  });
+
+  it("remembers that the extension said goodbye", async () => {
+    expect(link.saidGoodbye).toBe(false);
+    clientSide.send(JSON.stringify({ type: "bye" }));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(link.saidGoodbye).toBe(true);
+  });
+
+  it("notify() is silent on a closed link", async () => {
+    link.close(new BrowserMcpError("DISCONNECTED", "done"));
+    expect(() => link.notify("welcome", {})).not.toThrow();
+  });
+
   it("fails fast when the socket is already closed", async () => {
     clientSide.close();
     await new Promise((r) => setTimeout(r, 50));
