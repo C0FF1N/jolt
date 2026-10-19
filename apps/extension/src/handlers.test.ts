@@ -77,6 +77,39 @@ describe("extension handlers", () => {
     expect(calls.find((c) => c.method === "Input.dispatchMouseEvent")!.params).toMatchObject({ x: 5, y: 5 });
   });
 
+  it("draws the AI cursor on click and hover without blocking the real action", async () => {
+    const { h, calls } = make();
+    await h.browser_snapshot({});
+    await h.browser_click({ ref: "e2" });
+    await h.browser_hover({ ref: "e2" });
+    const drawn = calls.filter((c) => c.method === "Runtime.evaluate").map((c) => String(c.params!.expression));
+    expect(drawn).toHaveLength(2);
+    expect(drawn[0]).toMatch(/\(5, 5, "click"\)$/);
+    expect(drawn[1]).toMatch(/\(5, 5, "move"\)$/);
+    expect(calls.find((c) => c.method === "Runtime.evaluate")!.params).toMatchObject({ silent: true });
+  });
+
+  it("a failing cursor never fails or delays the click", async () => {
+    const f = fakeCdp();
+    const orig = f.cdp.send.bind(f.cdp);
+    f.cdp.send = (async (m: string, p?: Record<string, unknown>) => {
+      if (m === "Runtime.evaluate") throw new Error("page is gone");
+      return orig(m, p);
+    }) as typeof f.cdp.send;
+    const h = createHandlers({ cdp: f.cdp, consoleLog: () => [] });
+    await h.browser_snapshot({});
+    await expect(h.browser_click({ ref: "e2" })).resolves.toBeUndefined();
+    expect(f.calls.filter((c) => c.method === "Input.dispatchMouseEvent")).toHaveLength(3);
+  });
+
+  it("draws nothing when the cursor setting is off", async () => {
+    const f = fakeCdp();
+    const h = createHandlers({ cdp: f.cdp, consoleLog: () => [], showCursor: () => false });
+    await h.browser_snapshot({});
+    await h.browser_click({ ref: "e2" });
+    expect(f.calls.some((c) => c.method === "Runtime.evaluate")).toBe(false);
+  });
+
   it("rejects an unknown ref with a recovery hint", async () => {
     const { h } = make();
     await h.browser_snapshot({});

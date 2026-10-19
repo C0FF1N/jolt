@@ -1,4 +1,5 @@
 import { type AXNode, DEFAULT_LIMITS, type SnapshotLimits, buildSnapshot } from "./aria";
+import { type CursorMode, cursorExpression } from "./cursor";
 import { resolveChord } from "./keys";
 
 /** The only browser surface the handlers need; implemented over chrome.debugger / chrome.tabs. */
@@ -15,16 +16,26 @@ export type HandlerDeps = {
   cdp: Cdp;
   consoleLog: () => ConsoleEntry[];
   limits?: Partial<SnapshotLimits>;
+  /** Draw the visible AI cursor on click/hover. Defaults to on. */
+  showCursor?: () => boolean;
 };
 
 type Payload = Record<string, any>;
 const NAV_TIMEOUT_MS = 15_000;
 const MAX_VALUE_CHECKS = 50;
 
-export function createHandlers({ cdp, consoleLog, limits }: HandlerDeps) {
+export function createHandlers({ cdp, consoleLog, limits, showCursor = () => true }: HandlerDeps) {
   let refs = new Map<string, number>();
 
   const lim = { ...DEFAULT_LIMITS, ...limits };
+
+  /** Fire-and-forget: the cursor must never delay or fail the real action. */
+  function drawCursor(mode: CursorMode, x: number, y: number): void {
+    if (!showCursor()) return;
+    cdp
+      .send("Runtime.evaluate", { expression: cursorExpression(mode, x, y), silent: true })
+      .catch(() => undefined);
+  }
 
   async function snapshot(): Promise<string> {
     const { nodes } = await cdp.send<{ nodes: AXNode[] }>("Accessibility.getFullAXTree");
@@ -188,6 +199,7 @@ export function createHandlers({ cdp, consoleLog, limits }: HandlerDeps) {
     browser_click: async ({ ref }) => {
       const { backendNodeId } = await resolve(ref);
       const { x, y } = await center(backendNodeId);
+      drawCursor("click", x, y);
       await mouse("mouseMoved", x, y);
       await mouse("mousePressed", x, y, { button: "left", clickCount: 1 });
       await mouse("mouseReleased", x, y, { button: "left", clickCount: 1 });
@@ -195,6 +207,7 @@ export function createHandlers({ cdp, consoleLog, limits }: HandlerDeps) {
     browser_hover: async ({ ref }) => {
       const { backendNodeId } = await resolve(ref);
       const { x, y } = await center(backendNodeId);
+      drawCursor("move", x, y);
       await mouse("mouseMoved", x, y);
     },
     browser_type: async ({ ref, text, submit }) => {

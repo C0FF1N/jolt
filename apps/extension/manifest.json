@@ -1,10 +1,27 @@
 {
   "manifest_version": 3,
-  "name": "Browser MCP Turbo (unofficial)",
-  "version": "0.1.0",
-  "description": "Independent reimplementation of the Browser MCP extension protocol. Connects one tab you choose to a local MCP server on 127.0.0.1.",
-  "minimum_chrome_version": "116",
-  "permissions": ["debugger", "tabs", "storage"],
+  "name": "Jolt: AI browser control (MCP)",
+  "short_name": "Jolt",
+  "version": "1.0.0",
+  "description": "Let Claude Code, VS Code and other MCP clients drive one browser tab you choose. Visible, self-healing, and local-only.",
+  "homepage_url": "https://github.com/C0FF1N/jolt",
+  "minimum_chrome_version": "120",
+  "permissions": ["debugger", "tabs", "storage", "alarms"],
+  "host_permissions": ["http://127.0.0.1/*"],
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
   "background": { "service_worker": "background.js", "type": "module" },
-  "action": { "default_popup": "popup.html", "default_title": "Browser MCP Turbo" }
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Jolt",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png"
+    }
+  }
 }
